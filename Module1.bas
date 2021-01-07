@@ -1,3 +1,5 @@
+Public ivars
+
 Sub test()
 'Set newbook = Workbooks.Add
 'newbook.Windows(1).Caption = "КомСм" Название файла
@@ -413,53 +415,192 @@ Sub CopyCell(FromRange, ToRange)
     ToRange.Value = "copied" & v
 End Sub
 
-Sub test2()
+Sub ParseSource()
+Const A_COL As Integer = 1
+Const B_COL As Integer = 2
+Const C_COL As Integer = 3
+Const D_COL As Integer = 4
+Const E_COL As Integer = 5
+Const F_COL As Integer = 6
+Const G_COL As Integer = 7
+Const H_COL As Integer = 8
+Const I_COL As Integer = 9
+Const J_COL As Integer = 10
+
+Const O_COL As Integer = 15
+Const P_COL As Integer = 16
+Const Q_COL As Integer = 17
+Const R_COL As Integer = 18
+Const S_COL As Integer = 19
+
+Const X_COL As Integer = 24
+Const Y_COL As Integer = 25
+
+Set ivars = CreateObject("Scripting.Dictionary")
+
 Dim ws As Worksheet: Set ws = ActiveWorkbook.ActiveSheet
 Offset = 1
 lastRow = ws.Cells(ws.Cells.Rows.Count, "A").End(xlUp).row
 Dim bl As Collection: Set bl = New Collection
-Dim ci As Integer
-ci = 1
-
+'Dim ivars As Collection: Set ivars = New Collection
+'Dim ci As Integer
+'ci = 1
+'Dim in_section: Set in_section = False
+currentItem = -1
+lastRow = 350 ' tmp
 For i = Offset To lastRow
     If is_abcd(ws, i, A:=1, B:=1, C:=-1) Then
-        Debug.Print "Название объекта: " & ws.Cells(i, 7).Value & " |#" & i
-    ElseIf is_abcd(ws, i, A:=52) Then   'ws.Cells(i, 1).Value = 52
-        bl.Add (i)
+        Debug.Print "Название объекта: " & ws.Cells(i, G_COL).Value & " |#" & i
+    ElseIf is_abcd(ws, i, A:=52) Then
         ' 1st level (c = 1) - название сметы
         ' 2nd level (c = 3) - новая локальная смена
         ' 3rd level (c = 4) - новый раздел
         ' 4th level (c = 5) - новый подраздел
-        If is_abcd(ws, i, C:=1) Then ' ws.Cells(i, 3).Value = 1
-            Debug.Print "Раздел Название сметы: " & ws.Cells(i, 7).Value & " |#" & i
-        ElseIf is_abcd(ws, i, C:=3) Then ' ws.Cells(i, 3).Value = 3
-            Debug.Print "Локальная смета: " & ws.Cells(i, 7).Value & " |#" & i
-        ElseIf is_abcd(ws, i, C:=4) Then ' ws.Cells(i, 3).Value = 4
-            Debug.Print "Новые раздел: " & ws.Cells(i, 7).Value & " |#" & i
-        ElseIf is_abcd(ws, i, C:=5) Then ' ws.Cells(i, 3).Value = 5
-            Debug.Print "Новые подраздел: " & ws.Cells(i, 7).Value & " |#" & i
+        bl.Add (i)
+
+        If is_abcd(ws, i, C:=1) Then
+            Debug.Print "Раздел Название сметы: " & ws.Cells(i, G_COL).Value & " |#" & i
+        ElseIf is_abcd(ws, i, C:=3) Then
+            Debug.Print "Локальная смета: " & ws.Cells(i, G_COL).Value & " |#" & i
+        ElseIf is_abcd(ws, i, C:=4) Then
+            Debug.Print "Новые раздел: " & ws.Cells(i, G_COL).Value & " |#" & i
+            'in_section = True
+        ElseIf is_abcd(ws, i, C:=5) Then
+            Debug.Print "Новый подраздел: " & ws.Cells(i, G_COL).Value & " |#" & i
+            'in_section = True
         End If
-    ElseIf is_abcd(ws, i, A:=51) Then ' ws.Cells(i, 1).Value = 51
+    ElseIf is_abcd(ws, i, A:=51) Then
         startLine = bl(bl.Count)
         endLine = i
         Level = bl.Count
         
-        
         If is_same_block(ws, startLine, endLine) Then
             'colorize
-            ws.Range(ws.Cells(startLine, bl.Count), ws.Cells(endLine, bl.Count)).Interior.ColorIndex = ci
+            'ws.Range(ws.Cells(startLine, bl.Count), ws.Cells(endLine, bl.Count)).Interior.ColorIndex = ci
+            If is_abcd(ws, i, C:=1) Then
+                Debug.Print "Конец сметы: " & ws.Cells(i, G_COL).Value & " |#" & i
+            ElseIf is_abcd(ws, i, C:=3) Then
+                Debug.Print "Конец локальной сметы: " & ws.Cells(i, G_COL).Value & " |#" & i
+            ElseIf is_abcd(ws, i, C:=4) Then
+                Debug.Print "Конец раздела: " & ws.Cells(i, G_COL).Value & " |#" & i
+            ElseIf is_abcd(ws, i, C:=5) Then
+                Debug.Print "Конец подраздела: " & ws.Cells(i, G_COL).Value & " |#" & i
+                'in_section = False
+            End If
         Else
             Err.Raise Number:=vbObjectError + 513, _
               Description:="Incorrect 52-51 nesting on lines: " & startLine & " and " & endLine
         End If
-            
 
-        ci = ci + 1
+        'ci = ci + 1
         bl.Remove (bl.Count)
-        'ws.Cells(i, 1).Interior.Color = RGB(0, 250, 0)
+    ElseIf is_abcd(ws, i, A:=Array(17, 18), B:=1) Then
+        ' Игнорируем синие строки
+        If is_black(ws, i) Then
+            If Not has_comma(ws, i, E_COL) Then
+                itemNum = ws.Cells(i, E_COL).Value
+                
+                If currentItem > 0 And currentItem <> itemNum Then
+                    'подвести итоги по предыдущей позиции
+                    Total = ivars(currentItem)(P_COL) + _
+                    ivars(currentItem)(Q_COL) + _
+                    ivars(currentItem)(S_COL) + _
+                    ivars(currentItem)(X_COL) + _
+                    ivars(currentItem)(Y_COL) + _
+                    ivars(currentItem)(O_COL)
+                    Debug.Print ("Total for " & currentItem & ": " & Total)
+                End If
+                currentItem = itemNum
+                
+                Debug.Print "Работы: " & ws.Cells(i, G_COL).Value & " |#" & i
+                Debug.Print "П/П: " & ws.Cells(i, E_COL).Value
+                Debug.Print "Шифр расценки: " & ws.Cells(i, F_COL).Value
+                Debug.Print "Наименование работ: " & ws.Cells(i, G_COL).Value
+                Debug.Print "Ед. измерения: " & ws.Cells(i, H_COL).Value
+                Debug.Print "Количество: " & ws.Cells(i, I_COL).Value
+                
+                'Dim itemvars As Collection: Set itemvars = New Collection
+                'ivars.Add itemvars, itemNum
+                
+                
+                add_to_vars ws, i, P_COL, itemNum
+                add_to_vars ws, i, Q_COL, itemNum
+                add_to_vars ws, i, S_COL, itemNum
+                add_to_vars ws, i, X_COL, itemNum
+                add_to_vars ws, i, Y_COL, itemNum
+                
+            Else
+            If currentItem > 0 And currentItem <> itemNum Then
+                    'подвести итоги по предыдущей позиции
+                    Total = ivars(currentItem)(P_COL) + _
+                    ivars(currentItem)(Q_COL) + _
+                    ivars(currentItem)(S_COL) + _
+                    ivars(currentItem)(X_COL) + _
+                    ivars(currentItem)(Y_COL) + _
+                    ivars(currentItem)(O_COL)
+                    Debug.Print ("Total for " & currentItem & ": " & Total)
+                End If
+                currentItem = itemNum
+                
+                itemNum = ws.Cells(i, E_COL).Value
+                itemNum = Split(itemNum, ",")(0)
+                
+                add_to_vars ws, i, O_COL, itemNum
+                add_to_vars ws, i, X_COL, itemNum
+                add_to_vars ws, i, Y_COL, itemNum
+                
+            End If
+        End If
+        
     End If
 Next i
+
+'TraverseDictionary ivars
 End Sub
+
+Private Sub TraverseDictionary(d, Optional indention As String = " ", Optional ByVal i = 1, Optional ByVal depth = 0)
+
+    For Each key In d.Keys
+        Debug.Print (vbNewLine & indention & key & ":");
+        If VarType(d(key)) = 9 Then
+            depth = depth + 1
+            TraverseDictionary d(key), indention & "    ", i, depth
+        Else
+            Debug.Print (" " & d(key))
+        End If
+        i = i + 1
+    Next
+End Sub
+
+'Dim ivars As Collection: Set ivars = New Collection
+
+Sub add_to_vars(ws, row, col, itemNum)
+    'If ivars Is Nothing Then
+        'Set ivars = CreateObject("Scripting.Dictionary")
+    'End If
+    If Not ivars.Exists(itemNum) Then
+        Dim itemvars: Set itemvars = CreateObject("Scripting.Dictionary")
+        ivars.Add itemNum, itemvars
+    End If
+    If Not ivars(itemNum).Exists(col) Then
+        ivars(itemNum).Add col, 0
+    End If
+        
+    ivars(itemNum)(col) = ivars(itemNum)(col) + ws.Cells(row, col).Value
+End Sub
+
+
+Private Function Contains(col As Collection, key As Variant) As Boolean
+    On Error GoTo NotFound
+    Dim itm As Object
+    Set itm = col(key)
+    Contains = True
+MyExit:
+    Exit Function
+NotFound:
+    Contains = False
+    Resume MyExit
+End Function
 
 Function is_same_block(ws, row_1, row_2) As Boolean
     With ws
@@ -473,25 +614,41 @@ Function is_same_block(ws, row_1, row_2) As Boolean
     End With
 End Function
 
-Function is_abcd(ws, row, Optional ByVal A As Variant = Null, Optional ByVal B As Variant = Null, Optional ByVal C As Variant = Null, Optional ByVal D As Variant = Null) As Boolean
+Function is_abcd(ws, row, Optional ByVal A As Variant = Null, Optional ByVal B As Variant = Null, Optional ByVal C As Variant = Null, Optional ByVal d As Variant = Null) As Boolean
     ret_flag = True
-    If Not IsNull(A) Then
-        ret_flag = ret_flag And ws.Cells(row, 1).Value = A
-    End If
+    vars = Array(A, B, C, d)
     
-    If Not IsNull(B) Then
-        ret_flag = ret_flag And ws.Cells(row, 2).Value = B
-    End If
-    
-    If Not IsNull(C) Then
-        ret_flag = ret_flag And ws.Cells(row, 3).Value = C
-    End If
-    
-    If Not IsNull(D) Then
-        ret_flag = ret_flag And ws.Cells(row, 4).Value = D
-    End If
-    
+    For i = 0 To 3
+        If Not IsNull(vars(i)) Then
+            If IsArray(vars(i)) Then
+                ret_flag = ret_flag And cell_in_array(ws, row, i + 1, vars(i))
+            Else
+                ret_flag = ret_flag And cell_equals(ws, row, i + 1, vars(i))
+            End If
+        End If
+    Next i
     is_abcd = ret_flag
 End Function
 
+Private Function cell_equals(ws, row, col, val) As Boolean
+    cell_equals = ws.Cells(row, col).Value = val
+End Function
 
+Private Function cell_in_array(ws, row, col, arr) As Boolean
+    Dim i
+    For i = LBound(arr) To UBound(arr)
+        If arr(i) = ws.Cells(row, col).Value Then
+            cell_in_array = True
+            Exit Function
+        End If
+    Next i
+    cell_in_array = False
+End Function
+
+Private Function is_black(ws, row) As Boolean
+    is_black = ws.Cells(row, 7).Font.Color = 0
+End Function
+
+Private Function has_comma(ws, row, Optional ByVal col = 5) As Boolean
+    has_comma = InStr(ws.Cells(row, col).Value, ",") > 0
+End Function
