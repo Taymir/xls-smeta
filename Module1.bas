@@ -12,7 +12,7 @@ Dim nWS As Worksheet: Set nWS = nWB.Worksheets(1)
 
 
 
-Worksheets(1).Name = "КомСм"
+Worksheets(1).name = "КомСм"
 Worksheets(1).Rows(1).RowHeight = 27.25
 Worksheets(1).Rows(2).RowHeight = 42.75
 
@@ -37,7 +37,7 @@ Range("A1:J2").Borders.LineStyle = True
 ' Worksheets(1).Cells(1, 1).Value = "Объект: Реконструкция (в режиме реставрации с приспособлением к современному использованию) объекта капитального строительства " & Chr(34) & "Комплекс зданий по адресу: г. Москва, Красная площадь, д.5" & Chr(34) & " для размещения Музейно-выставочного комплекса Музеев Московского Кремля"
 CopyCell oldWS.Range("G4"), nWS.Cells(1, 1)
 
-Worksheets(1).Cells(1, 1).Font.Name = "Arial"
+Worksheets(1).Cells(1, 1).Font.name = "Arial"
 Worksheets(1).Cells(1, 1).Font.Size = 14
 Worksheets(1).Cells(1, 1).WrapText = True
 Range("K1:M1").Merge
@@ -46,19 +46,19 @@ Range("K1:M2").VerticalAlignment = xlCenter
 Range("K1:M2").Borders.LineStyle = True
 Range("K1:M2").Interior.Color = 3243501
 Worksheets(1).Cells(1, 11).Value = "Статья Бюджета"
-Worksheets(1).Cells(1, 11).Font.Name = "Arial"
+Worksheets(1).Cells(1, 11).Font.name = "Arial"
 Worksheets(1).Cells(1, 11).Font.Size = 12
 Worksheets(1).Cells(1, 11).Font.Bold = True
 Worksheets(1).Cells(1, 11).Font.Italic = True
-Worksheets(1).Cells(2, 11).Font.Name = "Arial"
+Worksheets(1).Cells(2, 11).Font.name = "Arial"
 Worksheets(1).Cells(2, 11).Font.Size = 10
 Worksheets(1).Cells(2, 11).Font.Bold = True
 'Worksheets(1).Cells(2, 11).Formula = ""
-Worksheets(1).Cells(2, 12).Font.Name = "Arial"
+Worksheets(1).Cells(2, 12).Font.name = "Arial"
 Worksheets(1).Cells(2, 12).Font.Size = 10
 Worksheets(1).Cells(2, 12).Font.Bold = True
 'Worksheets(1).Cells(2, 12).Formula = ""
-Worksheets(1).Cells(2, 13).Font.Name = "Arial"
+Worksheets(1).Cells(2, 13).Font.name = "Arial"
 Worksheets(1).Cells(2, 13).Font.Size = 10
 Worksheets(1).Cells(2, 13).Font.Bold = True
 Worksheets(1).Cells(2, 13).WrapText = True
@@ -67,7 +67,7 @@ Range("A3:M3").Merge
 Range("A3:M3").HorizontalAlignment = xlCenter
 Range("A3:M3").VerticalAlignment = xlCenter
 Worksheets(1).Cells(3, 1).Value = "Согласование коммерческих расценок на выполнение работ для физических лиц"
-Worksheets(1).Cells(3, 1).Font.Name = "Arial"
+Worksheets(1).Cells(3, 1).Font.name = "Arial"
 Worksheets(1).Cells(3, 1).Font.Size = 16
 Worksheets(1).Cells(3, 1).Font.Bold = True
 Range("A4:M4").Merge
@@ -76,7 +76,7 @@ Range("A4:M4").VerticalAlignment = xlCenter
 ' Worksheets(1).Cells(4, 1).Value = "02-02-24 ДОП Корпус Б. Устройство кровли с фонарями"
 CopyCell oldWS.Range("G12"), nWS.Cells(4, 1)
 
-Worksheets(1).Cells(4, 1).Font.Name = "Arial"
+Worksheets(1).Cells(4, 1).Font.name = "Arial"
 Worksheets(1).Cells(4, 1).Font.Size = 14
 Worksheets(1).Cells(4, 1).Font.Italic = True
 Worksheets(1).Cells(4, 1).Font.Bold = True
@@ -111,7 +111,7 @@ Range("I7:K7").Borders(xlEdgeTop).Weight = xlThin
 'Worksheets(1).Cells(6, 1).Font.Name = "Arial"
 'Worksheets(1).Cells(6, 1).Font.Size = 10
 'Worksheets(1).Cells(6, 1).Font.Bold = True
-Worksheets(1).Range("A6:M8").Font.Name = "Arial"
+Worksheets(1).Range("A6:M8").Font.name = "Arial"
 Worksheets(1).Range("A6:M8").Font.Size = 10
 Worksheets(1).Range("A6:M8").Font.Bold = True
 Range("D8").Borders(xlEdgeLeft).Weight = xlThin
@@ -152,7 +152,7 @@ Worksheets(1).Cells(8, 13).Value = 13
 
 'Раздел
 Range("A9:M9").Merge
-Worksheets(1).Range("A9:M9").Font.Name = "Arial"
+Worksheets(1).Range("A9:M9").Font.name = "Arial"
 Worksheets(1).Range("A9:M9").Font.Size = 14
 Worksheets(1).Range("A9:M9").Font.Bold = True
 Range("A9:M9").Borders.LineStyle = True
@@ -160,7 +160,7 @@ Range("A9:M9").Borders.Weight = xlMedium
 'Раздел
 
 'ячейка для расценок
-Worksheets(1).Range("A10:M11").Font.Name = "Arial"
+Worksheets(1).Range("A10:M11").Font.name = "Arial"
 Worksheets(1).Range("A10:M11").Font.Size = 10
 Worksheets(1).Range("A10:M11").Font.Bold = True
 Range("A10:M11").Borders.LineStyle = True
@@ -178,7 +178,7 @@ Range("A12:M12").Borders.Weight = xlMedium
 Worksheets(1).Rows(12).RowHeight = 13.5
 
 Range("A13:M14").Borders.LineStyle = True
-Worksheets(1).Range("A13:M14").Font.Name = "Arial"
+Worksheets(1).Range("A13:M14").Font.name = "Arial"
 Worksheets(1).Range("A13:M13").Font.Size = 11
 Worksheets(1).Range("A14:M14").Font.Size = 10
 Worksheets(1).Range("A13:M13").Font.Bold = True
@@ -210,7 +210,7 @@ Range("A16:H24").Borders(xlEdgeRight).Weight = xlMedium
 Range("A16:K24").Borders(xlEdgeRight).Weight = xlMedium
 Range("A16:M24").Borders(xlEdgeBottom).Weight = xlMedium
 
-Worksheets(1).Range("A16:M24").Font.Name = "Arial"
+Worksheets(1).Range("A16:M24").Font.name = "Arial"
 Worksheets(1).Range("A16:M24").Font.Size = 11
 Worksheets(1).Range("A16:M16").Font.Bold = True
 Worksheets(1).Range("A16:M16").Font.Size = 14
@@ -250,7 +250,7 @@ Range("A26:K36").Borders(xlEdgeRight).Weight = xlMedium
 Range("A26:M36").Borders(xlEdgeBottom).Weight = xlMedium
 Range("C26:C36").IndentLevel = 1
 
-Worksheets(1).Range("A26:M36").Font.Name = "Arial"
+Worksheets(1).Range("A26:M36").Font.name = "Arial"
 Worksheets(1).Range("A26:M36").Font.Size = 11
 Worksheets(1).Range("A28:M30").Font.Size = 10
 Worksheets(1).Range("A36:M36").Font.Size = 12
@@ -290,7 +290,7 @@ Range("A37:M37").Borders.LineStyle = True
 Range("A37:M37").Borders.Weight = xlMedium
 Worksheets(1).Rows(37).RowHeight = 13.5
 Range("A38:M38").Borders.LineStyle = True
-Worksheets(1).Range("A38:M38").Font.Name = "Arial"
+Worksheets(1).Range("A38:M38").Font.name = "Arial"
 Worksheets(1).Range("A38:M38").Font.Bold = True
 Worksheets(1).Range("A38:M38").Font.Size = 12
 Worksheets(1).Range("A38:M38").Font.Italic = True
@@ -311,7 +311,7 @@ Range("A44:C44").Borders(xlEdgeBottom).Weight = xlThin
 Range("A46:C46").Borders(xlEdgeBottom).Weight = xlThin
 Range("A48:C48").Borders(xlEdgeBottom).Weight = xlThin
 
-Worksheets(1).Range("A40:E49").Font.Name = "Arial"
+Worksheets(1).Range("A40:E49").Font.name = "Arial"
 Worksheets(1).Range("A40:A49").Font.Bold = True
 Worksheets(1).Range("A40:A49").Font.Size = 10
 Worksheets(1).Range("D40:D49").Font.Size = 14
@@ -364,7 +364,7 @@ Range("F40:I41").Merge
 Range("J40:K41").Merge
 Range("L40:L41").Merge
 Range("M40:M41").Merge
-Worksheets(1).Range("F40:M49").Font.Name = "Arial"
+Worksheets(1).Range("F40:M49").Font.name = "Arial"
 Worksheets(1).Range("F40:M43").Font.Bold = True
 Worksheets(1).Range("F46:M46").Font.Bold = True
 Worksheets(1).Range("F48:M48").Font.Bold = True
@@ -437,6 +437,7 @@ Const X_COL As Integer = 24
 Const Y_COL As Integer = 25
 
 Set ivars = CreateObject("Scripting.Dictionary")
+Set glvars = CreateObject("Scripting.Dictionary")
 
 Dim ws As Worksheet: Set ws = ActiveWorkbook.ActiveSheet
 Offset = 1
@@ -447,7 +448,7 @@ Dim bl As Collection: Set bl = New Collection
 'ci = 1
 'Dim in_section: Set in_section = False
 currentItem = -1
-lastRow = 350 ' tmp
+' lastRow = 350 ' tmp
 For i = Offset To lastRow
     If is_abcd(ws, i, A:=1, B:=1, C:=-1) Then
         Debug.Print "Название объекта: " & ws.Cells(i, G_COL).Value & " |#" & i
@@ -497,6 +498,7 @@ For i = Offset To lastRow
     ElseIf is_abcd(ws, i, A:=Array(17, 18), B:=1) Then
         ' Игнорируем синие строки
         If is_black(ws, i) Then
+            ' Основные позиции (без запятой)
             If Not has_comma(ws, i, E_COL) Then
                 itemNum = ws.Cells(i, E_COL).Value
                 
@@ -509,6 +511,7 @@ For i = Offset To lastRow
                     ivars(currentItem)(Y_COL) + _
                     ivars(currentItem)(O_COL)
                     Debug.Print ("Total for " & currentItem & ": " & Total)
+                    Debug.Print ("7-11 for " & currentItem & ": " & ivars(currentItem)(S_COL))
                 End If
                 currentItem = itemNum
                 
@@ -529,9 +532,13 @@ For i = Offset To lastRow
                 add_to_vars ws, i, X_COL, itemNum
                 add_to_vars ws, i, Y_COL, itemNum
                 
+                glvars("МИМ") = glvars("МИМ") + ws.Cells(i, Q_COL).Value
+                glvars("ЗПМАШ") = glvars("ЗПМАШ") + ws.Cells(i, R_COL).Value
+                
             Else
+            ' субпозиции (с запятой)
             If currentItem > 0 And currentItem <> itemNum Then
-                    'подвести итоги по предыдущей позиции
+                    'подвести итоги по предыдущей позиции 'TMP переделать
                     Total = ivars(currentItem)(P_COL) + _
                     ivars(currentItem)(Q_COL) + _
                     ivars(currentItem)(S_COL) + _
@@ -548,14 +555,20 @@ For i = Offset To lastRow
                 add_to_vars ws, i, O_COL, itemNum
                 add_to_vars ws, i, X_COL, itemNum
                 add_to_vars ws, i, Y_COL, itemNum
-                
-            End If
-        End If
-        
-    End If
+            End If ' итоги по пред. позиции
+            If is_abcd(ws, i, A:=17) Then
+                glvars("МР") = glvars("МР") + ws.Cells(i, P_COL).Value ' or use O in both cases?
+            ElseIf is_abcd(ws, i, A:=18) Then
+                glvars("МР") = glvars("МР") + ws.Cells(i, O_COL).Value
+            End If ' is_abcd(A=17)
+            
+            glvars("НАКЛРАСХ") = glvars("НАКЛРАСХ") + ws.Cells(i, X_COL).Value
+            glvars("СМЕТПРИБ") = glvars("СМЕТПРИБ") + ws.Cells(i, Y_COL).Value
+        End If ' is_black
+    End If ' is_abcd(A=17|18)
 Next i
 
-'TraverseDictionary ivars
+TraverseDictionary glvars
 End Sub
 
 Private Sub TraverseDictionary(d, Optional indention As String = " ", Optional ByVal i = 1, Optional ByVal depth = 0)
@@ -578,11 +591,11 @@ Sub add_to_vars(ws, row, col, itemNum)
     'If ivars Is Nothing Then
         'Set ivars = CreateObject("Scripting.Dictionary")
     'End If
-    If Not ivars.Exists(itemNum) Then
+    If Not ivars.exists(itemNum) Then
         Dim itemvars: Set itemvars = CreateObject("Scripting.Dictionary")
         ivars.Add itemNum, itemvars
     End If
-    If Not ivars(itemNum).Exists(col) Then
+    If Not ivars(itemNum).exists(col) Then
         ivars(itemNum).Add col, 0
     End If
         
@@ -590,17 +603,6 @@ Sub add_to_vars(ws, row, col, itemNum)
 End Sub
 
 
-Private Function Contains(col As Collection, key As Variant) As Boolean
-    On Error GoTo NotFound
-    Dim itm As Object
-    Set itm = col(key)
-    Contains = True
-MyExit:
-    Exit Function
-NotFound:
-    Contains = False
-    Resume MyExit
-End Function
 
 Function is_same_block(ws, row_1, row_2) As Boolean
     With ws
