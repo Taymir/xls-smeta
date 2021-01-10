@@ -31,48 +31,236 @@ Const Z_COL As Integer = 26
 
 
 Private sWS As Worksheet
-Private dWS As Worksheet
-Private ivars
 Private gvars
-Private sects
-Private name As String
-Private object As String
-
-
+Private sects As Collection
+Private lastItem
 
 Private Sub class_initialize()
-    Set ivars = CreateObject("Scripting.Dictionary")
     Set gvars = CreateObject("Scripting.Dictionary")
-    Set sects = CreateObject("Scripting.Dictionary")
+    Set sects = New Collection
 End Sub
 
 Public Sub init(sourceWS As Worksheet)
-    sWS = sourceWS
+    Set sWS = sourceWS
 End Sub
 
-Public Sub add_col_to_vars(row, col, itemNum)
-    If Not ivars.exists(itemNum) Then
-        Dim itemvars: Set itemvars = CreateObject("Scripting.Dictionary")
-        ivars.Add itemNum, itemvars
-    End If
-    If Not ivars(itemNum).exists(col) Then
-        ivars(itemNum).Add col, 0
-    End If
+
+Private Function is_subsection(Optional ByVal current As Integer = -1, Optional ByVal curitem As Integer = -1) As Boolean
+    is_subsection = False
     
-    ivars(itemNum)(col) = ivars(itemNum)(col) + sWS.Cells(row, col).Value
+    If current = -1 Then
+        current = sects.Count
+    End If
+    If curitem = -1 Then
+        curitem = sects(current).items.Count
+    End If
+    If curitem > 0 Then
+        If TypeOf sects(current).items(curitem) Is Section Then
+            is_subsection = True
+        End If
+    End If
+End Function
+Public Sub add_section_col(row, col)
+    add_section (sWS.Cells(row, col).Value)
 End Sub
 
-Public Sub add_key_to_vars(val, key, itemNum)
-    If Not ivars.exists(itemNum) Then
-        Dim itemvars: Set itemvars = CreateObject("Scripting.Dictionary")
-        ivars.Add itemNum, itemvars
-    End If
-    If Not ivars(itemNum).exists(key) Then
-        ivars(itemNum).Add key, 0
-    End If
+Public Sub add_section(name As String)
+    Dim sect As Section
+    Set sect = New Section
     
-    ivars(itemNum)(key) = val
+    sect.name = name
+    Set sect.items = New Collection
+    
+    sects.Add sect
 End Sub
+
+Public Sub add_subsection_col(row, col)
+    add_subsection (sWS.Cells(row, col).Value)
+End Sub
+
+Public Sub add_subsection(name)
+    Dim sect As Section
+    Set sect = New Section
+    
+    sect.name = name
+    Set sect.items = New Collection
+    
+    current = sects.Count
+    sects(current).items.Add sect
+End Sub
+
+Private Function get_last_section() As Section
+    last_section = sects.Count
+    last_item = sects(last_section).items.Count
+    
+    If is_subsection(last_section, last_item) Then
+        Set get_last_section = sects(last_section).items(last_item)
+    Else
+        Set get_last_section = sects(last_section)
+    End If
+End Function
+
+Public Sub add_item(itemNum)
+    'last_section = sects.Count
+    'last_item = sects(last_section).items.Count
+    
+    Dim itm As Item
+    Set itm = New Item
+    itm.name = itemNum
+    Set itm.items = CreateObject("Scripting.Dictionary")
+    
+    Set sect = get_last_section
+    sect.items.Add itm, CStr(itemNum)
+    
+    'If is_subsection(last_section, last_item) Then
+    '    sects(last_section).items(last_item).items.Add itm, CStr(itemNum)
+    'Else
+    '    sects(last_section).items.Add itm, CStr(itemNum)
+    'End If
+End Sub
+
+
+Public Sub add_item_vars(row, col, ByVal itemNum)
+    Set sect = get_last_section
+    itemNum = CStr(itemNum)
+
+    If Not HasKey(sect.items, itemNum) Then
+        add_item (itemNum)
+    End If
+    If Not sect.items(itemNum).items.Exists(col) Then
+        sect.items(itemNum).items.Add col, sWS.Cells(row, col).Value
+    Else
+        sect.items(itemNum).items(col) = sect.items(itemNum).items(col) + sWS.Cells(row, col).Value
+    End If
+End Sub
+
+Function HasKey(coll As Collection, ByVal strKey As String) As Boolean
+On Error GoTo IsMissingError
+        Dim val As Variant
+'        val = coll(strKey)
+        HasKey = IsObject(coll(strKey))
+        HasKey = True
+        On Error GoTo 0
+        Exit Function
+IsMissingError:
+        HasKey = False
+        On Error GoTo 0
+End Function
+
+Public Sub test2()
+    print_sects
+End Sub
+
+Public Sub test()
+    add_section ("Главная")
+    add_item (0)
+    add_section ("вторая")
+    add_item (1)
+    add_item (2)
+    add_item (3)
+    add_section ("Третья")
+    add_subsection ("первый подраздел третьей секции")
+    add_item (4)
+    add_subsection ("второй подраздел третьей секции")
+    add_item (5)
+    add_item (6)
+    
+    
+    print_sects
+End Sub
+
+Public Sub render()
+    Dim tpl As EstimationTemplate
+    Set tpl = New EstimationTemplate
+    tpl.createBook
+    tpl.renderHeader gvars("Name"), gvars("SmetaName")
+    
+    For s = 1 To sects.Count
+        tpl.render_section sects(s).name
+        
+        For i = 1 To sects(s).items.Count
+            If is_subsection(s, i) Then
+                tpl.render_subsection sects(s).items(i).name
+                
+                For ii = 1 To sects(s).items(i).items.Count
+                    render_item tpl, sects(s).items(i).items(ii)
+                Next ii
+            Else ' is not subsection == is item
+                render_item tpl, sects(s).items(i)
+            End If
+        Next i
+    Next s
+        
+    tpl.render_footer _
+        MR:=gvars("МР"), _
+        MiM:=gvars("MiM"), _
+        ZPmas:=gvars("ZPmas"), _
+        NR:=gvars("NR"), _
+        SP:=gvars("SP")
+
+    TraverseDictionary gvars
+    
+End Sub
+
+Private Sub render_item(tpl, Item)
+    num = Item.items(E_COL)
+    code = Item.items(F_COL)
+    name = Item.items(G_COL)
+    unit = Item.items(H_COL)
+    amount = Item.items(I_COL)
+    total_fot = Item.items(S_COL)
+    total = get_total_for_pos(Item.items)
+        
+    units_mult = GetNumeric(unit)
+    unit = GetRestPart(unit, units_mult)
+    amount = amount * CInt(units_mult)
+
+    tpl.render_item num, code, name, unit, amount, total, total_fot
+End Sub
+
+Private Sub print_sects()
+    For s = 1 To sects.Count
+        Debug.Print "+" & sects(s).name
+        For i = 1 To sects(s).items.Count
+            If is_subsection(s, i) Then
+                'Debug.Print "subsection"
+                Debug.Print "  +" & sects(s).items(i).name
+                For ii = 1 To sects(s).items(i).items.Count
+                    Debug.Print "  |" & sects(s).items(i).items(ii).name
+                    'TraverseDictionary (sects(s).items(i).items(ii).items)
+                    Debug.Print get_total_for_pos(sects(s).items(i).items(ii).items)
+                Next ii
+                Debug.Print "  |___"
+            Else
+                'Debug.Print "not subsection"
+                Debug.Print "|" & sects(s).items(i).name
+                Debug.Print get_total_for_pos(sects(s).items(i).items)
+            End If
+        Next i
+        Debug.Print "|___"
+    Next s
+End Sub
+
+Function GetRestPart(str, numeric_part) As String
+    Start = Len(numeric_part) + 1
+    GetRestPart = Mid(str, Start)
+    GetRestPart = LCase(GetRestPart)
+    GetRestPart = Replace(GetRestPart, " ", "")
+    GetRestPart = Replace(GetRestPart, "мп", "м")
+End Function
+
+Function GetNumeric(CellRef)
+    Dim StringLength As Integer
+    StringLength = Len(CellRef)
+    For i = 1 To StringLength
+        If IsNumeric(Mid(CellRef, i, 1)) Then
+            Result = Result & Mid(CellRef, i, 1)
+        Else
+            Exit For
+        End If
+    Next i
+    GetNumeric = Result
+End Function
 
 Public Sub add_to_global(name, row, col)
     gvars(name) = gvars(name) + sWS.Cells(row, col).Value
@@ -86,22 +274,14 @@ Public Sub set_object(str As name)
     object = str
 End Sub
 
-Public Sub add_section()
-    
-End Sub
 
-Public Sub add_subsection()
-
-End Sub
-
-
-Private Function get_total_for_pos(Item As Integer) As Double
-    get_total_for_pos = ivars(Item)(P_COL) + _
-    ivars(Item)(Q_COL) + _
-    ivars(Item)(S_COL) + _
-    ivars(Item)(X_COL) + _
-    ivars(Item)(Y_COL) + _
-    ivars(Item)(O_COL)
+Private Function get_total_for_pos(Item) As Double
+    get_total_for_pos = Item(P_COL) + _
+    Item(Q_COL) + _
+    Item(S_COL) + _
+    Item(X_COL) + _
+    Item(Y_COL) + _
+    Item(O_COL)
 End Function
 
 Private Sub TraverseDictionary(d, Optional indention As String = " ", Optional ByVal i = 1, Optional ByVal depth = 0)
