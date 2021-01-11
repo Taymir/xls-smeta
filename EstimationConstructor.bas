@@ -192,13 +192,11 @@ Public Sub render()
     Next s
         
     tpl.render_footer _
-        MR:=gvars("МР"), _
+        MR:=gvars("MR"), _
         MiM:=gvars("MiM"), _
         ZPmas:=gvars("ZPmas"), _
         NR:=gvars("NR"), _
         SP:=gvars("SP")
-
-    TraverseDictionary gvars
     
 End Sub
 

@@ -106,14 +106,13 @@ Sub ParseSource()
                         constr.add_item_vars i, O_COL, itemNum
                         constr.add_item_vars i, X_COL, itemNum
                         constr.add_item_vars i, Y_COL, itemNum
-                        
-                        If is_abcd(ws, i, A:=17) Then
-                            constr.add_to_global "МР", i, P_COL
-                        Else
-                            constr.add_to_global "МР", i, O_COL
-                        End If
-
                     End If ' has_comma
+                    
+                    If is_abcd(ws, i, A:=17) Then
+                        constr.add_to_global "MR", i, P_COL
+                    Else
+                        constr.add_to_global "MR", i, O_COL
+                    End If
                     constr.add_to_global "NR", i, X_COL
                     constr.add_to_global "SP", i, Y_COL
                 End If ' itemNum <> ""
