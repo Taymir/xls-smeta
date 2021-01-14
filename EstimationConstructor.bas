@@ -34,6 +34,7 @@ Private sWS As Worksheet
 Private gvars
 Private sects As Collection
 Private lastItem
+Public tpl As EstimationTemplate
 
 Private Sub class_initialize()
     Set gvars = CreateObject("Scripting.Dictionary")
@@ -170,7 +171,6 @@ Public Sub test()
 End Sub
 
 Public Sub render()
-    Dim tpl As EstimationTemplate
     Set tpl = New EstimationTemplate
     tpl.createBook
     tpl.renderHeader gvars("Name"), gvars("SmetaName")
@@ -240,8 +240,11 @@ Private Sub print_sects()
 End Sub
 
 Function GetRestPart(str, numeric_part) As String
-    Start = Len(numeric_part) + 1
-    GetRestPart = Mid(str, Start)
+    GetRestPart = str
+    If Len(numeric_part) > 1 Then
+        Start = Len(numeric_part) + 1
+        GetRestPart = Mid(GetRestPart, Start)
+    End If
     GetRestPart = LCase(GetRestPart)
     GetRestPart = Replace(GetRestPart, " ", "")
     GetRestPart = Replace(GetRestPart, "мп", "м")
@@ -250,6 +253,7 @@ End Function
 Function GetNumeric(CellRef)
     Dim StringLength As Integer
     StringLength = Len(CellRef)
+    Result = 1
     For i = 1 To StringLength
         If IsNumeric(Mid(CellRef, i, 1)) Then
             Result = Result & Mid(CellRef, i, 1)
@@ -263,6 +267,11 @@ End Function
 Public Sub add_to_global(name, row, col)
     gvars(name) = gvars(name) + sWS.Cells(row, col).Value
 End Sub
+
+Public Function get_global(name)
+    get_global = gvars(name)
+End Function
+
 
 Public Sub set_name(str As name)
     name = str

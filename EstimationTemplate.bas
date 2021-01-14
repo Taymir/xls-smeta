@@ -1,8 +1,8 @@
 ' Class EstimationTemplate
 ' Содержит шаблоны для рендеринга результата-таблицы сметы
 
-Private nWB As Workbook
-Private nWS As Worksheet
+Public nWB As Workbook
+Public nWS As Worksheet
 
 Public Sub createBook()
     Workbooks.Add
@@ -10,7 +10,7 @@ Public Sub createBook()
     Set nWS = nWB.Worksheets(1)
     nWS.name = "КомСм"
     
-    'Set createBook = nWS
+    'Set createBook = nWB
 End Sub
 
 Public Sub renderHeader(object, smetaName)
@@ -289,15 +289,6 @@ Public Sub render_footer(MR, MiM, ZPmas, NR, SP)
     render_footer3 NR, SP
     render_footer4
     render_footer5
-    
-    ' tmp Add Grand Total named Range
-    row = get_last_row + 2
-    
-    
-    nWS.Cells(row, 7).Value = 42285286.22
-    
-    nWS.Names.Add name:="GrandTotal", RefersTo:=nWS.Range(nWS.Cells(row, 7), nWS.Cells(row, 7))
-    nWS.Names("GrandTotal").Comment = "ВСЕГО ЗАТРАТ В СМЕТЕ"
 End Sub
 
 ' Итого по смете
@@ -327,9 +318,45 @@ Private Sub render_footer1()
         .Range(.Cells(row, 1), .Cells(row, 6)).Merge
         .Range(.Cells(row + 1, 1), .Cells(row + 1, 6)).Merge
         .Range(.Cells(row + 1, 1), .Cells(row + 1, 13)).HorizontalAlignment = xlRight
-        .Range(.Cells(row + 1, 1), .Cells(row + 1, 13)).Font.Italic = True
+        .Range(.Cells(row + 1, 1), .Cells(row + 1, 1)).Font.Italic = True
         .Cells(row, 1).Value = "Итого по смете:"
         .Cells(row + 1, 1).Value = "в т.ч. ФОТ"
+        
+        ' Форматирование
+        .Range(.Cells(row, 7), .Cells(row + 1, 7)).NumberFormat = "#,##0"
+        .Range(.Cells(row, 8), .Cells(row + 1, 8)).NumberFormat = "0.0%"
+        .Range(.Cells(row, 9), .Cells(row + 1, 9)).NumberFormat = "_(* #,##0.00_);_(* (#,##0.00);_(* ""-""??_);_(@_)"
+        .Range(.Cells(row, 10), .Cells(row + 1, 10)).NumberFormat = "#,##0.00"
+        .Range(.Cells(row, 11), .Cells(row + 1, 11)).NumberFormat = "0.0%"
+        .Range(.Cells(row, 12), .Cells(row + 1, 12)).NumberFormat = "#,##0.00"
+        .Range(.Cells(row, 13), .Cells(row + 1, 13)).NumberFormat = "0.0%"
+        
+        ' Формулы
+        .Names.Add name:="SmetTotal", RefersTo:=nWS.Range(.Cells(row, 7), .Cells(row, 7))
+        .Names("SmetTotal").Comment = "Итого по смете"
+        
+        .Names.Add name:="FOT", RefersTo:=nWS.Range(.Cells(row + 1, 7), .Cells(row + 1, 7))
+        .Names("FOT").Comment = "Фонд оплаты труда"
+    
+        .Range(.Cells(row, 7), .Cells(row, 7)).FormulaR1C1 = _
+        "=SUMIF(INDIRECT(ADDRESS(MATCH(""Наименование работ"",C[-4],0)+3,3)):INDIRECT(ADDRESS(ROW()-1,3)),""<>в т.ч. ФОТ"",INDIRECT(ADDRESS(MATCH(""ИТОГО"",C,0)+2,COLUMN())):INDIRECT(ADDRESS(ROW()-1,COLUMN())))"
+        .Range(.Cells(row + 1, 7), .Cells(row + 1, 7)).FormulaR1C1 = _
+        "=SUMIF(INDIRECT(ADDRESS(MATCH(""Наименование работ"",C[-4],0)+3,3)):INDIRECT(ADDRESS(ROW()-2,3)),""=в т.ч. ФОТ"",INDIRECT(ADDRESS(MATCH(""ИТОГО"",C,0)+2,COLUMN())):INDIRECT(ADDRESS(ROW()-2,COLUMN())))"
+        
+        .Range(.Cells(row, 8), .Cells(row + 1, 8)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        
+        .Range(.Cells(row, 10), .Cells(row, 10)).FormulaR1C1 = _
+        "=SUMIF(INDIRECT(ADDRESS(MATCH(""Наименование работ"",C[-7],0)+3,3)):INDIRECT(ADDRESS(ROW()-1,3)),""<>в т.ч. ФОТ"",INDIRECT(ADDRESS(MATCH(""ИТОГО"",C,0)+2,COLUMN())):INDIRECT(ADDRESS(ROW()-1,COLUMN())))"
+        .Range(.Cells(row + 1, 10), .Cells(row + 1, 10)).FormulaR1C1 = _
+        "=SUMIF(INDIRECT(ADDRESS(MATCH(""Наименование работ"",C[-7],0)+3,3)):INDIRECT(ADDRESS(ROW()-2,3)),""=в т.ч. ФОТ"",INDIRECT(ADDRESS(MATCH(""ИТОГО"",C,0)+2,COLUMN())):INDIRECT(ADDRESS(ROW()-2,COLUMN())))"
+
+        .Range(.Cells(row, 11), .Cells(row + 1, 11)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        
+        .Range(.Cells(row, 12), .Cells(row + 1, 12)).FormulaR1C1 = "=RC[-5]-RC[-2]"
+        
+        .Range(.Cells(row, 13), .Cells(row + 1, 13)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+
+        
         
         ' Пустая строка
         .Range(.Cells(row + 2, 1), .Cells(row + 2, 13)).Merge
@@ -345,54 +372,91 @@ Private Sub render_footer2(MR, MiM, ZPmas)
         row = get_last_row + 1
             
         ' Рамки
-        .Range(.Cells(row, 1), .Cells(row + 8, 13)).Borders.LineStyle = True
-        .Range(.Cells(row, 1), .Cells(row + 8, 13)).Interior.Color = 14809087
+        .Range(.Cells(row, 1), .Cells(row + 6, 13)).Borders.LineStyle = True
+        .Range(.Cells(row, 1), .Cells(row + 6, 13)).Interior.Color = 14809087
         .Range(.Cells(row, 3), .Cells(row, 13)).Merge
-        .Range(.Cells(row, 3), .Cells(row + 8, 3)).IndentLevel = 1
-        .Range(.Cells(row, 1), .Cells(row + 8, 13)).Borders(xlEdgeLeft).Weight = xlMedium
-        .Range(.Cells(row, 1), .Cells(row + 8, 13)).Borders(xlEdgeRight).Weight = xlMedium
-        .Range(.Cells(row, 1), .Cells(row + 8, 5)).Borders(xlEdgeRight).Weight = xlMedium
-        .Range(.Cells(row, 1), .Cells(row + 8, 8)).Borders(xlEdgeRight).Weight = xlMedium
-        .Range(.Cells(row, 1), .Cells(row + 8, 11)).Borders(xlEdgeRight).Weight = xlMedium
-        .Range(.Cells(row, 1), .Cells(row + 8, 13)).Borders(xlEdgeBottom).Weight = xlMedium
+        .Range(.Cells(row, 3), .Cells(row + 6, 3)).IndentLevel = 1
+        .Range(.Cells(row, 1), .Cells(row + 6, 13)).Borders(xlEdgeLeft).Weight = xlMedium
+        .Range(.Cells(row, 1), .Cells(row + 6, 13)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(row, 1), .Cells(row + 6, 5)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(row, 1), .Cells(row + 6, 8)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(row, 1), .Cells(row + 6, 11)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(row, 1), .Cells(row + 6, 13)).Borders(xlEdgeBottom).Weight = xlMedium
         .Range(.Cells(row, 2), .Cells(row, 2)).Borders(xlEdgeRight).LineStyle = False
         
         ' Шрифты
-        .Range(.Cells(row, 1), .Cells(row + 8, 13)).Font.name = "Arial"
-        .Range(.Cells(row, 1), .Cells(row + 8, 13)).Font.Size = 11
+        .Range(.Cells(row, 1), .Cells(row + 6, 13)).Font.name = "Arial"
+        .Range(.Cells(row, 1), .Cells(row + 6, 13)).Font.Size = 11
         .Range(.Cells(row, 1), .Cells(row, 13)).Font.Bold = True
         .Range(.Cells(row, 1), .Cells(row, 13)).Font.Size = 14
-        .Range(.Cells(row + 8, 1), .Cells(row + 8, 13)).Font.Bold = True
-        .Range(.Cells(row + 8, 1), .Cells(row + 8, 13)).Font.Size = 12
+        .Range(.Cells(row + 6, 1), .Cells(row + 6, 13)).Font.Bold = True
+        .Range(.Cells(row + 6, 1), .Cells(row + 6, 13)).Font.Size = 12
         .Range(.Cells(row, 1), .Cells(row, 1)).HorizontalAlignment = xlCenter
         
         ' Текст
         .Cells(row, 1).Value = "II"
         .Cells(row, 3).Value = "Свод прямых затрат в смете"
         .Cells(row + 1, 3).Value = "ФОТ по позициям"
-        .Cells(row + 2, 3).Value = "Вывоз мусора" ' Нужно ли??
-        .Cells(row + 3, 3).Value = "Материальные ресурсы"
-        .Cells(row + 4, 3).Value = "Субподряд"
-        .Range(.Cells(row + 5, 3), .Cells(row + 5, 3)).Rows.WrapText = True
-        .Cells(row + 5, 3).Value = "Машины, механизмы, з/п механизаторов, в т.ч.:"
-        .Range(.Cells(row + 6, 3), .Cells(row + 7, 3)).HorizontalAlignment = xlRight
-        .Cells(row + 6, 3).Value = "аренда машин и механизмов"
-        .Cells(row + 6, 3).Font.Italic = True
-        .Cells(row + 7, 3).Value = "з/п машинистов"
-        .Cells(row + 7, 3).Font.Italic = True
-        .Cells(row + 8, 3).Value = "Итого прямых затрат в смете"
+        .Cells(row + 2, 3).Value = "Материальные ресурсы"
+        .Range(.Cells(row + 3, 3), .Cells(row + 3, 3)).Rows.WrapText = True
+        .Cells(row + 3, 3).Value = "Машины, механизмы, з/п механизаторов, в т.ч.:"
+        .Range(.Cells(row + 4, 3), .Cells(row + 5, 3)).HorizontalAlignment = xlRight
+        .Cells(row + 4, 3).Value = "аренда машин и механизмов"
+        .Cells(row + 4, 3).Font.Italic = True
+        .Cells(row + 5, 3).Value = "з/п машинистов"
+        .Cells(row + 5, 3).Font.Italic = True
+        .Cells(row + 6, 3).Value = "Итого прямых затрат в смете"
+        
+        
+        
+        ' Форматирование
+        '.Range(.Cells(row + 3, 7), .Cells(row + 8, 7)).Font.Bold = True
+        '.Range(.Cells(row + 8, 7), .Cells(row + 8, 7)).Font.Size = 12
+        '.Range(.Cells(row + 8, 10), .Cells(row + 8, 10)).Font.Bold = True
+        '.Range(.Cells(row + 8, 12), .Cells(row + 8, 12)).Font.Bold = True
+        .Range(.Cells(row + 6, 12), .Cells(row + 6, 12)).Font.Size = 14
+        .Range(.Cells(row + 6, 12), .Cells(row + 6, 12)).Font.ColorIndex = 41
+        
+        .Range(.Cells(row + 1, 7), .Cells(row + 6, 13)).VerticalAlignment = xlCenter
+        .Range(.Cells(row + 1, 7), .Cells(row + 6, 7)).NumberFormat = "#,##0"
+        .Range(.Cells(row + 1, 8), .Cells(row + 6, 8)).NumberFormat = "0.0%"
+        .Range(.Cells(row + 1, 9), .Cells(row + 6, 9)).NumberFormat = "_(* #,##0.00_);_(* (#,##0.00);_(* ""-""??_);_(@_)"
+        .Range(.Cells(row + 1, 10), .Cells(row + 6, 10)).NumberFormat = "#,##0"
+        .Range(.Cells(row + 1, 11), .Cells(row + 6, 11)).NumberFormat = "0.0%"
+        .Range(.Cells(row + 1, 12), .Cells(row + 6, 12)).NumberFormat = "#,##0"
+        .Range(.Cells(row + 1, 13), .Cells(row + 6, 13)).NumberFormat = "0.0%"
         
         ' Заполнение данных
-        .Cells(row + 3, 7).Value = MR ' Материальные ресурсы
-        .Cells(row + 5, 7).Value = MiM ' Машины и механизмы
-        .Cells(row + 7, 7).Value = ZPmas ' ЗП Машинистов
+        .Cells(row + 2, 7).Value = MR ' Материальные ресурсы 'TMP
+        .Cells(row + 3, 7).Value = MiM ' Машины и механизмы  'TMP
+        .Cells(row + 5, 7).Value = ZPmas ' ЗП Машинистов     'TMP
+        
+        ' Формулы
+        .Range(.Cells(row + 1, 7), .Cells(row + 1, 7)).FormulaR1C1 = "=FOT"
+        .Range(.Cells(row + 4, 7), .Cells(row + 4, 7)).FormulaR1C1 = "=R[-1]C-R[1]C"
+        .Range(.Cells(row + 6, 7), .Cells(row + 6, 7)).FormulaR1C1 = "=R[-5]C+R[-4]C+R[-3]C"
+        
+        .Range(.Cells(row + 1, 8), .Cells(row + 6, 8)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        
+        .Range(.Cells(row + 1, 10), .Cells(row + 1, 10)).FormulaR1C1 = "=R[-3]C"
+        .Range(.Cells(row + 2, 10), .Cells(row + 2, 10)).Value = 0 'TODO
+        .Range(.Cells(row + 3, 10), .Cells(row + 3, 10)).FormulaR1C1 = "=R[1]C+R[2]C"
+        .Range(.Cells(row + 4, 10), .Cells(row + 4, 10)).Value = 0 'TODO
+        .Range(.Cells(row + 5, 10), .Cells(row + 5, 10)).Value = 0 'TODO
+        .Range(.Cells(row + 6, 10), .Cells(row + 6, 10)).FormulaR1C1 = "=SUM(R[-5]C:R[-3]C)"
+        
+        .Range(.Cells(row + 1, 11), .Cells(row + 6, 11)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        
+        .Range(.Cells(row + 1, 12), .Cells(row + 6, 12)).FormulaR1C1 = "=RC[-5]-RC[-2]"
+        
+        .Range(.Cells(row + 1, 13), .Cells(row + 6, 13)).FormulaR1C1 = "=RC[-1]/GrandTotal"
         
         
         ' Пустая строка
-        .Range(.Cells(row + 9, 1), .Cells(row + 9, 13)).Merge
-        .Range(.Cells(row + 9, 1), .Cells(row + 9, 13)).Borders.LineStyle = True
-        .Range(.Cells(row + 9, 1), .Cells(row + 9, 13)).Borders.Weight = xlMedium
-        .Rows(row + 9).RowHeight = 13.5
+        .Range(.Cells(row + 7, 1), .Cells(row + 7, 13)).Merge
+        .Range(.Cells(row + 7, 1), .Cells(row + 7, 13)).Borders.LineStyle = True
+        .Range(.Cells(row + 7, 1), .Cells(row + 7, 13)).Borders.Weight = xlMedium
+        .Rows(row + 7).RowHeight = 13.5
 
             
             
@@ -443,14 +507,67 @@ Private Sub render_footer3(NR, SP)
         .Cells(row + 9, 3).Font.Italic = True
         .Cells(row + 9, 3).HorizontalAlignment = xlRight
         .Cells(row + 10, 3).Font.Size = 14
-        .Cells(row + 10, 3).Font.Bold = True
+        .Range(.Cells(row + 10, 3), .Cells(row + 10, 13)).Font.Bold = True
         .Cells(row + 10, 3).Value = "Итого дополнительных затрат в смете"
-        Range(.Cells(row + 10, 3), .Cells(row + 10, 3)).Rows.WrapText = True
+        .Range(.Cells(row + 10, 3), .Cells(row + 10, 3)).Rows.WrapText = True
         'Свод дополнительных затрат в смете
+        
+        ' Форматирование
+        .Range(.Cells(row + 1, 7), .Cells(row + 10, 13)).VerticalAlignment = xlCenter
+        .Range(.Cells(row + 1, 7), .Cells(row + 10, 7)).NumberFormat = "#,##0"
+        .Range(.Cells(row + 1, 8), .Cells(row + 10, 8)).NumberFormat = "0.0%"
+        .Range(.Cells(row + 1, 9), .Cells(row + 10, 9)).NumberFormat = "_(* #,##0.00_);_(* (#,##0.00);_(* ""-""??_);_(@_)"
+        .Range(.Cells(row + 1, 10), .Cells(row + 10, 10)).NumberFormat = "#,##0"
+        .Range(.Cells(row + 1, 11), .Cells(row + 10, 11)).NumberFormat = "0.0%"
+        .Range(.Cells(row + 1, 12), .Cells(row + 10, 12)).NumberFormat = "#,##0"
+        .Range(.Cells(row + 1, 13), .Cells(row + 10, 13)).NumberFormat = "0.0%"
+        .Range(.Cells(row + 8, 10), .Cells(row + 9, 10)).NumberFormat = "#,##0.00"
+        
+        .Range(.Cells(row + 10, 12), .Cells(row + 10, 13)).Font.Size = 14
+        .Range(.Cells(row + 10, 12), .Cells(row + 10, 13)).Font.ColorIndex = 41 'blue
+        
+        .Range(.Cells(row + 2, 10), .Cells(row + 4, 11)).Font.ColorIndex = 15 'grey
+        .Range(.Cells(row + 2, 10), .Cells(row + 2, 10)).Font.ColorIndex = 3 'red
+        .Range(.Cells(row + 2, 10), .Cells(row + 4, 11)).Font.Italic = True
+        
+        .Range(.Cells(row + 8, 10), .Cells(row + 8, 10)).Font.ColorIndex = 15 'grey
+        .Range(.Cells(row + 9, 10), .Cells(row + 9, 10)).Font.ColorIndex = 3 'red
+        .Range(.Cells(row + 8, 10), .Cells(row + 9, 10)).Font.Italic = True
         
         ' Заполнение данных
         .Cells(row + 1, 7).Value = NR ' Накладные расходы
         .Cells(row + 5, 7).Value = SP ' Сметная прибыль
+        
+        ' Формулы
+        .Range(.Cells(row + 6, 7), .Cells(row + 6, 7)).FormulaR1C1 = "=(SmetTotal)*0.0141"
+        .Range(.Cells(row + 7, 7), .Cells(row + 7, 7)).FormulaR1C1 = "=(SmetTotal+R[-1]C)*0.2"
+        .Range(.Cells(row + 10, 7), .Cells(row + 10, 7)).FormulaR1C1 = "=SUM(R[-5]C:R[-3]C)+R[-9]C"
+        
+        .Range(.Cells(row + 1, 8), .Cells(row + 1, 8)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        .Range(.Cells(row + 5, 8), .Cells(row + 7, 8)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        .Range(.Cells(row + 10, 8), .Cells(row + 10, 8)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        
+        .Range(.Cells(row + 1, 10), .Cells(row + 1, 10)).FormulaR1C1 = "=SUM(R[1]C:R[3]C)"
+        .Range(.Cells(row + 2, 10), .Cells(row + 2, 10)).FormulaR1C1 = "=R[10]C[-3]/100*5"
+        .Range(.Cells(row + 3, 10), .Cells(row + 3, 10)).FormulaR1C1 = "=(R[-10]C+R[-6]C)/100*30.9"
+        .Range(.Cells(row + 4, 10), .Cells(row + 4, 10)).FormulaR1C1 = "=GrandTotal/100*2.23/1.2"
+        .Range(.Cells(row + 7, 10), .Cells(row + 7, 10)).FormulaR1C1 = "=R[1]C+R[2]C"
+        .Range(.Cells(row + 8, 10), .Cells(row + 8, 10)).FormulaR1C1 = "=(R[-4]C+R[-12]C+R[-14]C)*0.2"
+        .Range(.Cells(row + 9, 10), .Cells(row + 9, 10)).FormulaR1C1 = "=R[-2]C[-3]-R[-1]C"
+        .Range(.Cells(row + 10, 10), .Cells(row + 10, 10)).FormulaR1C1 = "=R[-9]C+R[-3]C"
+        
+        .Range(.Cells(row + 1, 11), .Cells(row + 7, 11)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        .Range(.Cells(row + 10, 11), .Cells(row + 10, 11)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        
+        .Range(.Cells(row + 1, 12), .Cells(row + 1, 12)).FormulaR1C1 = "=RC[-5]-RC[-2]"
+        .Range(.Cells(row + 5, 12), .Cells(row + 7, 12)).FormulaR1C1 = "=RC[-5]-RC[-2]"
+        .Range(.Cells(row + 10, 12), .Cells(row + 10, 12)).FormulaR1C1 = "=RC[-5]-RC[-2]"
+        
+        .Range(.Cells(row + 1, 13), .Cells(row + 1, 13)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        .Range(.Cells(row + 5, 13), .Cells(row + 7, 13)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        .Range(.Cells(row + 10, 13), .Cells(row + 10, 13)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        
+        
         
         
     End With
@@ -481,6 +598,25 @@ Private Sub render_footer4()
         .Range(.Cells(row + 1, 1), .Cells(row + 1, 13)).Borders(xlEdgeBottom).Weight = xlMedium
         'всего затрат в смете
         
+        ' Форматирование
+        .Range(.Cells(row + 1, 7), .Cells(row + 1, 7)).NumberFormat = "#,##0"
+        .Range(.Cells(row + 1, 8), .Cells(row + 1, 8)).NumberFormat = "0.0%"
+        .Range(.Cells(row + 1, 9), .Cells(row + 1, 9)).NumberFormat = "_(* #,##0.00_);_(* (#,##0.00);_(* ""-""??_);_(@_)"
+        .Range(.Cells(row + 1, 10), .Cells(row + 1, 10)).NumberFormat = "#,##0.00"
+        .Range(.Cells(row + 1, 11), .Cells(row + 1, 11)).NumberFormat = "0.0%"
+        .Range(.Cells(row + 1, 12), .Cells(row + 1, 12)).NumberFormat = "#,##0.00"
+        .Range(.Cells(row + 1, 13), .Cells(row + 1, 13)).NumberFormat = "0.0%"
+        
+        ' Формулы
+        nWS.Names.Add name:="GrandTotal", RefersTo:=nWS.Range(nWS.Cells(row + 1, 7), nWS.Cells(row + 1, 7))
+        nWS.Names("GrandTotal").Comment = "ВСЕГО ЗАТРАТ В СМЕТЕ"
+        
+        .Range(.Cells(row + 1, 7), .Cells(row + 1, 7)).FormulaR1C1 = "=R[-14]C+R[-2]C"
+        .Range(.Cells(row + 1, 8), .Cells(row + 1, 8)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        .Range(.Cells(row + 1, 10), .Cells(row + 1, 10)).FormulaR1C1 = "=R[-14]C+R[-2]C"
+        .Range(.Cells(row + 1, 11), .Cells(row + 1, 11)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        .Range(.Cells(row + 1, 12), .Cells(row + 1, 12)).FormulaR1C1 = "=RC[-5]-RC[-2]"
+        .Range(.Cells(row + 1, 13), .Cells(row + 1, 13)).FormulaR1C1 = "=RC[-1]/GrandTotal"
         
     End With
 End Sub
@@ -582,14 +718,41 @@ Private Sub render_footer5()
         .Cells(row + 2, 6).Value = "Финансовый результат" & Chr(10) & "(прибыль до уплаты налогов в бюджет и АУП)"
         .Cells(row + 2, 6).Rows.WrapText = True
         .Cells(row + 4, 6).Value = "АУП"
-        .Cells(row + 4, 6).Font.Italic = True
+        .Range(.Cells(row + 4, 6), .Cells(row + 4, 13)).Font.Italic = True
         .Cells(row + 5, 6).Value = "НДС к уплате в бюджет"
-        .Cells(row + 5, 6).Font.Italic = True
+        .Range(.Cells(row + 5, 6), .Cells(row + 5, 13)).Font.Italic = True
         .Cells(row + 6, 6).Value = "Валовая прибыль"
         .Cells(row + 7, 6).Value = "Налог на прибыль"
-        .Cells(row + 7, 6).Font.Italic = True
+        .Range(.Cells(row + 7, 6), .Cells(row + 7, 13)).Font.Italic = True
         .Cells(row + 8, 6).Value = "ЧИСТАЯ ПРИБЫЛЬ ОТ ПРОИЗВОДСТВА РАБОТ"
         'подвал
+        
+        ' Форматирование
+        .Range(.Cells(row + 2, 10), .Cells(row + 8, 10)).NumberFormat = "#,##0"
+        .Range(.Cells(row + 2, 11), .Cells(row + 8, 13)).NumberFormat = "0.0%"
+        .Range(.Cells(row + 2, 10), .Cells(row + 8, 13)).HorizontalAlignment = xlCenter
+        
+        ' Формулы
+        .Range(.Cells(row + 2, 10), .Cells(row + 2, 10)).FormulaR1C1 = "=R[-4]C[-3]-R[-4]C+R[-14]C+R[-7]C"
+        .Range(.Cells(row + 4, 10), .Cells(row + 4, 10)).FormulaR1C1 = "=R[-16]C"
+        .Range(.Cells(row + 5, 10), .Cells(row + 5, 10)).FormulaR1C1 = "=R[-10]C"
+        .Range(.Cells(row + 6, 10), .Cells(row + 6, 10)).FormulaR1C1 = "=R[-4]C-R[-2]C-R[-1]C"
+        .Range(.Cells(row + 7, 10), .Cells(row + 7, 10)).FormulaR1C1 = "=(R[-5]C-R[-3]C-R[-2]C)/100*20"
+        .Range(.Cells(row + 8, 10), .Cells(row + 8, 10)).FormulaR1C1 = "=R[-2]C-R[-1]C"
+        
+        .Range(.Cells(row + 2, 11), .Cells(row + 8, 11)).FormulaR1C1 = "=RC[-1]/GrandTotal"
+        .Range(.Cells(row + 6, 11), .Cells(row + 6, 11)).FormulaR1C1 = "=R[-4]C-R[-2]C-R[-1]C"
+        
+        .Range(.Cells(row + 2, 12), .Cells(row + 2, 12)).Value = 0.24  'TMP
+        .Range(.Cells(row + 4, 12), .Cells(row + 4, 12)).FormulaR1C1 = "=719230093/15519448760" 'TMP
+        .Range(.Cells(row + 5, 12), .Cells(row + 5, 12)).FormulaR1C1 = "=696881732/15519448760" 'TMP
+        .Range(.Cells(row + 6, 12), .Cells(row + 6, 12)).FormulaR1C1 = "=R[-4]C-R[-2]C-R[-1]C"
+        .Range(.Cells(row + 7, 12), .Cells(row + 7, 12)).FormulaR1C1 = "=463538550/15519448760" 'TMP
+        .Range(.Cells(row + 8, 12), .Cells(row + 8, 12)).Value = 0.119  'TMP
+        
+        .Range(.Cells(row + 2, 13), .Cells(row + 8, 13)).FormulaR1C1 = "=RC[-2]-RC[-1]"
+        .Range(.Cells(row + 6, 13), .Cells(row + 6, 13)).FormulaR1C1 = "=R[-4]C-R[-2]C-R[-1]C"
+        
     End With
 End Sub
 

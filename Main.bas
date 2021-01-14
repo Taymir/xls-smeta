@@ -1,5 +1,3 @@
-
-Sub ParseSource()
     Const A_COL As Integer = 1
     Const B_COL As Integer = 2
     Const C_COL As Integer = 3
@@ -19,20 +17,32 @@ Sub ParseSource()
     
     Const X_COL As Integer = 24
     Const Y_COL As Integer = 25
+
+
+Public Sub transformSmeta()
+    Dim WB As Workbook: Set WB = ActiveWorkbook
+
+    Dim shtName As String: shtName = "Source"
+    If Not WorksheetExists(shtName, WB) Then
+        answer = MsgBox("Не найден лист Source, использовать текущий лист?", vbYesNo)
+        If answer = vbNo Then
+            Exit Sub
+        End If
+    End If
     
     Dim StartTime As Double
     Dim SecondsElapsed As Double
     StartTime = Timer
-    Dim ws As Worksheet: Set ws = ActiveWorkbook.ActiveSheet
+    Dim ws As Worksheet: Set ws = WB.Worksheets(shtName)
     Dim blocks As Collection: Set blocks = New Collection
     Dim constr As EstimationConstructor
     Set constr = New EstimationConstructor
     constr.init ws
     firstRow = 1
-    lastRow = ws.Cells(ws.Cells.Rows.Count, "A").End(xlUp).row
+    lastrow = ws.Cells(ws.Cells.Rows.Count, "A").End(xlUp).row
     'lastRow = 450 ' TMP
     
-    For i = firstRow To lastRow
+    For i = firstRow To lastrow
         ' A=1 B=1 C=1 - Название объекта
         If is_abcd(ws, i, A:=1, B:=1, C:=-1) Then
             constr.add_to_global "Name", i, G_COL
@@ -120,53 +130,89 @@ Sub ParseSource()
         End If ' is_abcd(A=17|18)
     Next i
     
-    'constr.test2
     constr.render
+    transformResources WB, constr.tpl.nWB, constr.get_global("MR"), constr.get_global("MiM")
+    
     
     SecondsElapsed = Round(Timer - StartTime, 2)
     Debug.Print "Execution time: " & SecondsElapsed
 End Sub
 
-Public Sub test3()
-    Dim e As EstimationConstructor
-    Set e = New EstimationConstructor
-    e.test
+Public Sub transformResources(WB As Workbook, newWB As Workbook, MR As Double, MiM As Double)
+    'If IsEmpty(WB) Then
+    '    Set WB = ActiveWorkbook
+    'End If
+        
+    Dim shtName As String: shtName = "Расчет стоимости ресурсов"
+    Dim tpl As ResourcesTemplate
+    Set tpl = New ResourcesTemplate
+    'tpl.createBook
+    tpl.setBook newWB
+        
+        
+    If Not WorksheetExists(shtName, WB) Then
+        MsgBox "Не найден лист с расчетом стоимости ресурсов, таблицы МиМ и МР будут пусты"
+    Else
+        Dim ws As Worksheet: Set ws = WB.Worksheets(shtName)
+        firstRow = 1
+        lastrow = ws.Cells(ws.Cells.Rows.Count, "A").End(xlUp).row
+        
+        Dim cel As Range
+        MiMstart = -1
+        MiMend = -1
+        MRstart = -1
+        MRend = -1
+        
+        For i = firstRow To lastrow
+            Set cel = ws.Range(ws.Cells(i, 1), ws.Cells(i, 3))
+            If cel.MergeCells = True Then
     
-End Sub
-
-Public Sub test4()
-    Dim s As New Collection
-    Debug.Print Exists(s, "test")
-    s.Add 123, "test"
-    Debug.Print Exists(s, "test")
-    
-End Sub
-
-
-Function Exists(coll As Collection, ByVal key As String) As Boolean
-
-    On Error GoTo EH
-
-    IsObject (coll.Item(key))
-    
-    Exists = True
-EH:
-End Function
-
-
-Private Sub TraverseDictionary(d, Optional indention As String = " ", Optional ByVal i = 1, Optional ByVal depth = 0)
-
-    For Each key In d.Keys
-        Debug.Print (vbNewLine & indention & key & ":");
-        If VarType(d(key)) = 9 Then
-            depth = depth + 1
-            TraverseDictionary d(key), indention & "    ", i, depth
-        Else
-            Debug.Print (" " & d(key))
+                cel.Interior.Color = vbRed
+                If InStr(cel(1).Value, "Машины и механизмы ") > 0 Then
+                    MiMstart = i
+                ElseIf InStr(cel(1).Value, "Итого машины и механизмы") > 0 Then
+                    MiMend = i
+                ElseIf InStr(cel(1).Value, "Материальные ресурсы") > 0 Then
+                    MRstart = i
+                ElseIf InStr(cel(1).Value, "Итого материальные ресурсы") > 0 Then
+                    MRend = i
+                End If
+            End If
+        Next i
+        
+        If MiMstart = -1 Or MiMend = -1 Or MRstart = -1 Or MRend = -1 Then
+            Err.Raise Number:=vbObjectError + 513, _
+                Description:="Не найдены все блоки Машины и механизмы и материальные ресурсы"
+     
         End If
-        i = i + 1
-    Next
+        
+        tpl.fill_MR _
+            nameRange:=ws.Range(ws.Cells(MRstart + 1, 2), ws.Cells(MRend - 1, 2)), _
+            unitRange:=ws.Range(ws.Cells(MRstart + 1, 3), ws.Cells(MRend - 1, 3)), _
+            amountRange:=ws.Range(ws.Cells(MRstart + 1, 4), ws.Cells(MRend - 1, 4)), _
+            priceRange:=ws.Range(ws.Cells(MRstart + 1, 7), ws.Cells(MRend - 1, 7))
+            
+        tpl.fill_MiM _
+            nameRange:=ws.Range(ws.Cells(MiMstart + 1, 2), ws.Cells(MiMend - 1, 2)), _
+            unitRange:=ws.Range(ws.Cells(MiMstart + 1, 3), ws.Cells(MiMend - 1, 3)), _
+            amountRange:=ws.Range(ws.Cells(MiMstart + 1, 4), ws.Cells(MiMend - 1, 4)), _
+            priceRange:=ws.Range(ws.Cells(MiMstart + 1, 7), ws.Cells(MiMend - 1, 7))
+            
+    End If ' WorkSheet Exists
+    
+    tpl.render_MR MR
+    tpl.render_MiM MiM
 End Sub
+
+Function WorksheetExists(shtName As String, Optional WB As Workbook) As Boolean
+    Dim sht As Worksheet
+
+    If WB Is Nothing Then Set WB = ActiveWorkbook
+    On Error Resume Next
+    Set sht = WB.Sheets(shtName)
+    On Error GoTo 0
+    WorksheetExists = Not sht Is Nothing
+End Function
 
 
 Function is_same_block(ws, row_1, row_2) As Boolean
