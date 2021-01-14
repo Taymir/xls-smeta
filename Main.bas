@@ -180,23 +180,24 @@ Public Sub transformResources(WB As Workbook, newWB As Workbook, MR As Double, M
             End If
         Next i
         
-        If MiMstart = -1 Or MiMend = -1 Or MRstart = -1 Or MRend = -1 Then
+        If MiMstart = -1 And MiMend = -1 And MRstart = -1 And MRend = -1 Then
+            MsgBox "Не найдены блоки с расчетами стоимости ресурсов, таблицы МиМ и МР будут пусты"
+        ElseIf MiMstart = -1 Or MiMend = -1 Or MRstart = -1 Or MRend = -1 Then
             Err.Raise Number:=vbObjectError + 513, _
                 Description:="Не найдены все блоки Машины и механизмы и материальные ресурсы"
-     
+        Else
+            tpl.fill_MR _
+                nameRange:=ws.Range(ws.Cells(MRstart + 1, 2), ws.Cells(MRend - 1, 2)), _
+                unitRange:=ws.Range(ws.Cells(MRstart + 1, 3), ws.Cells(MRend - 1, 3)), _
+                amountRange:=ws.Range(ws.Cells(MRstart + 1, 4), ws.Cells(MRend - 1, 4)), _
+                priceRange:=ws.Range(ws.Cells(MRstart + 1, 7), ws.Cells(MRend - 1, 7))
+                
+            tpl.fill_MiM _
+                nameRange:=ws.Range(ws.Cells(MiMstart + 1, 2), ws.Cells(MiMend - 1, 2)), _
+                unitRange:=ws.Range(ws.Cells(MiMstart + 1, 3), ws.Cells(MiMend - 1, 3)), _
+                amountRange:=ws.Range(ws.Cells(MiMstart + 1, 4), ws.Cells(MiMend - 1, 4)), _
+                priceRange:=ws.Range(ws.Cells(MiMstart + 1, 7), ws.Cells(MiMend - 1, 7))
         End If
-        
-        tpl.fill_MR _
-            nameRange:=ws.Range(ws.Cells(MRstart + 1, 2), ws.Cells(MRend - 1, 2)), _
-            unitRange:=ws.Range(ws.Cells(MRstart + 1, 3), ws.Cells(MRend - 1, 3)), _
-            amountRange:=ws.Range(ws.Cells(MRstart + 1, 4), ws.Cells(MRend - 1, 4)), _
-            priceRange:=ws.Range(ws.Cells(MRstart + 1, 7), ws.Cells(MRend - 1, 7))
-            
-        tpl.fill_MiM _
-            nameRange:=ws.Range(ws.Cells(MiMstart + 1, 2), ws.Cells(MiMend - 1, 2)), _
-            unitRange:=ws.Range(ws.Cells(MiMstart + 1, 3), ws.Cells(MiMend - 1, 3)), _
-            amountRange:=ws.Range(ws.Cells(MiMstart + 1, 4), ws.Cells(MiMend - 1, 4)), _
-            priceRange:=ws.Range(ws.Cells(MiMstart + 1, 7), ws.Cells(MiMend - 1, 7))
             
     End If ' WorkSheet Exists
     

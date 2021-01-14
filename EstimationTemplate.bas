@@ -172,6 +172,11 @@ End Function
 Public Sub render_section(name)
     With nWS
         row = get_last_row + 1
+        
+        ' HARDFIX TMP Временное решение проблемы с отсутствием разделов
+        If name = "LocalSmeta" Then
+            Exit Sub
+        End If
     
         .Range(.Cells(row, 1), .Cells(row, 13)).Merge
         

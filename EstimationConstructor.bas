@@ -92,6 +92,19 @@ End Sub
 
 Private Function get_last_section() As Section
     last_section = sects.Count
+    
+    'HARDFIX TMP: Если item добавляется в отсутствии sect-ов, добавим элемент LocalSmeta в качестве 0-го раздела
+    If last_section = 0 Then
+        Dim sect As Section
+        Set sect = New Section
+        
+        sect.name = "LocalSmeta"
+        Set sect.items = New Collection
+        
+        sects.Add sect
+        last_section = 1
+    End If
+    
     last_item = sects(last_section).items.Count
     
     If is_subsection(last_section, last_item) Then

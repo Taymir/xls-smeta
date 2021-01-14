@@ -40,6 +40,7 @@ Public Sub render_MiM(Optional MiM)
         
         .Names.Add name:="MiMOther", RefersTo:=.Range(.Cells(lastrow, 6), .Cells(lastrow, 6))
         .Names("MiMOther").Comment = "Машины и механизмы - Прочее"
+        .Range("MiMOther").Value = 0
         
     
     
@@ -285,6 +286,9 @@ End Sub
 Private Function get_last_row(ws As Worksheet) As Integer
     'get_last_row = nWS.Cells(nWS.Cells.Rows.Count, "A").End(xlUp).row
     get_last_row = ws.UsedRange.Rows(ws.UsedRange.Rows.Count).row ' учитывает пустые колонки
+    If get_last_row < 2 Then
+        get_last_row = 2
+    End If
 
 End Function
 
@@ -305,9 +309,11 @@ Public Sub render_MR(Optional MR)
         For i = 3 To lastrow
             .Range(.Cells(i, 1), .Cells(i, 1)).Value = i - 2
         Next i
-            .Range(.Cells(lastrow, 3), .Cells(lastrow, 3)).Value = "Прочее"
-            .Names.Add name:="MROther", RefersTo:=.Range(.Cells(lastrow, 7), .Cells(lastrow, 7))
-            .Names("MROther").Comment = "Материальные ресурсы - Прочее"
+        .Range(.Cells(lastrow, 3), .Cells(lastrow, 3)).Value = "Прочее"
+        
+        .Names.Add name:="MROther", RefersTo:=.Range(.Cells(lastrow, 7), .Cells(lastrow, 7))
+        .Names("MROther").Comment = "Материальные ресурсы - Прочее"
+        .Range("MROther").Value = 0
 
 
         ' Форматирование
