@@ -29,6 +29,10 @@ Const X_COL As Integer = 24
 Const Y_COL As Integer = 25
 Const Z_COL As Integer = 26
 
+Const EH_COL As Integer = 138
+Const EM_COL As Integer = 143
+Const GM_COL As Integer = 195
+
 
 Private sWS As Worksheet
 Private gvars
@@ -36,7 +40,7 @@ Private sects As Collection
 Private lastItem
 Public tpl As EstimationTemplate
 
-Private Sub class_initialize()
+Private Sub Class_Initialize()
     Set gvars = CreateObject("Scripting.Dictionary")
     Set sects = New Collection
 End Sub
@@ -53,16 +57,16 @@ Private Function is_subsection(Optional ByVal current As Integer = -1, Optional 
         current = sects.Count
     End If
     If curitem = -1 Then
-        curitem = sects(current).items.Count
+        curitem = sects(current).Items.Count
     End If
     If curitem > 0 Then
-        If TypeOf sects(current).items(curitem) Is Section Then
+        If TypeOf sects(current).Items(curitem) Is Section Then
             is_subsection = True
         End If
     End If
 End Function
 Public Sub add_section_col(row, col)
-    add_section (sWS.Cells(row, col).Value)
+    add_section (sWS.Cells(row, col).value)
 End Sub
 
 Public Sub add_section(name As String)
@@ -70,13 +74,13 @@ Public Sub add_section(name As String)
     Set sect = New Section
     
     sect.name = name
-    Set sect.items = New Collection
+    Set sect.Items = New Collection
     
     sects.Add sect
 End Sub
 
 Public Sub add_subsection_col(row, col)
-    add_subsection (sWS.Cells(row, col).Value)
+    add_subsection (sWS.Cells(row, col).value)
 End Sub
 
 Public Sub add_subsection(name)
@@ -84,10 +88,10 @@ Public Sub add_subsection(name)
     Set sect = New Section
     
     sect.name = name
-    Set sect.items = New Collection
+    Set sect.Items = New Collection
     
     current = sects.Count
-    sects(current).items.Add sect
+    sects(current).Items.Add sect
 End Sub
 
 Private Function get_last_section() As Section
@@ -99,16 +103,16 @@ Private Function get_last_section() As Section
         Set sect = New Section
         
         sect.name = "LocalSmeta"
-        Set sect.items = New Collection
+        Set sect.Items = New Collection
         
         sects.Add sect
         last_section = 1
     End If
     
-    last_item = sects(last_section).items.Count
+    last_item = sects(last_section).Items.Count
     
     If is_subsection(last_section, last_item) Then
-        Set get_last_section = sects(last_section).items(last_item)
+        Set get_last_section = sects(last_section).Items(last_item)
     Else
         Set get_last_section = sects(last_section)
     End If
@@ -121,10 +125,10 @@ Public Sub add_item(itemNum)
     Dim itm As Item
     Set itm = New Item
     itm.name = itemNum
-    Set itm.items = CreateObject("Scripting.Dictionary")
+    Set itm.Items = CreateObject("Scripting.Dictionary")
     
     Set sect = get_last_section
-    sect.items.Add itm, CStr(itemNum)
+    sect.Items.Add itm, CStr(itemNum)
     
     'If is_subsection(last_section, last_item) Then
     '    sects(last_section).items(last_item).items.Add itm, CStr(itemNum)
@@ -138,13 +142,13 @@ Public Sub add_item_vars(row, col, ByVal itemNum)
     Set sect = get_last_section
     itemNum = CStr(itemNum)
 
-    If Not HasKey(sect.items, itemNum) Then
+    If Not HasKey(sect.Items, itemNum) Then
         add_item (itemNum)
     End If
-    If Not sect.items(itemNum).items.Exists(col) Then
-        sect.items(itemNum).items.Add col, sWS.Cells(row, col).Value
+    If Not sect.Items(itemNum).Items.Exists(col) Then
+        sect.Items(itemNum).Items.Add col, sWS.Cells(row, col).value
     Else
-        sect.items(itemNum).items(col) = sect.items(itemNum).items(col) + sWS.Cells(row, col).Value
+        sect.Items(itemNum).Items(col) = sect.Items(itemNum).Items(col) + sWS.Cells(row, col).value
     End If
 End Sub
 
@@ -165,7 +169,7 @@ Public Sub test2()
     print_sects
 End Sub
 
-Public Sub test()
+Public Sub Test()
     add_section ("Главная")
     add_item (0)
     add_section ("вторая")
@@ -186,20 +190,20 @@ End Sub
 Public Sub render()
     Set tpl = New EstimationTemplate
     tpl.createBook
-    tpl.renderHeader gvars("Name"), gvars("SmetaName")
+    tpl.render_header gvars("Name"), gvars("SmetaName")
     
     For s = 1 To sects.Count
         tpl.render_section sects(s).name
         
-        For i = 1 To sects(s).items.Count
+        For i = 1 To sects(s).Items.Count
             If is_subsection(s, i) Then
-                tpl.render_subsection sects(s).items(i).name
+                tpl.render_subsection sects(s).Items(i).name
                 
-                For ii = 1 To sects(s).items(i).items.Count
-                    render_item tpl, sects(s).items(i).items(ii)
+                For ii = 1 To sects(s).Items(i).Items.Count
+                    render_item tpl, sects(s).Items(i).Items(ii)
                 Next ii
             Else ' is not subsection == is item
-                render_item tpl, sects(s).items(i)
+                render_item tpl, sects(s).Items(i)
             End If
         Next i
     Next s
@@ -209,18 +213,20 @@ Public Sub render()
         MiM:=gvars("MiM"), _
         ZPmas:=gvars("ZPmas"), _
         NR:=gvars("NR"), _
-        SP:=gvars("SP")
+        SP:=gvars("SP"), _
+        EH:=gvars("EH"), _
+        EM:=gvars("EM")
     
 End Sub
 
 Private Sub render_item(tpl, Item)
-    num = Item.items(E_COL)
-    code = Item.items(F_COL)
-    name = Item.items(G_COL)
-    unit = Item.items(H_COL)
-    amount = Item.items(I_COL)
-    total_fot = Item.items(S_COL)
-    total = get_total_for_pos(Item.items)
+    num = Item.Items(E_COL)
+    code = Item.Items(F_COL)
+    name = Item.Items(G_COL)
+    unit = Item.Items(H_COL)
+    amount = Item.Items(I_COL)
+    total_fot = Item.Items(S_COL)
+    total = get_total_for_pos(Item.Items)
         
     units_mult = GetNumeric(unit)
     unit = GetRestPart(unit, units_mult)
@@ -232,20 +238,20 @@ End Sub
 Private Sub print_sects()
     For s = 1 To sects.Count
         Debug.Print "+" & sects(s).name
-        For i = 1 To sects(s).items.Count
+        For i = 1 To sects(s).Items.Count
             If is_subsection(s, i) Then
                 'Debug.Print "subsection"
-                Debug.Print "  +" & sects(s).items(i).name
-                For ii = 1 To sects(s).items(i).items.Count
-                    Debug.Print "  |" & sects(s).items(i).items(ii).name
+                Debug.Print "  +" & sects(s).Items(i).name
+                For ii = 1 To sects(s).Items(i).Items.Count
+                    Debug.Print "  |" & sects(s).Items(i).Items(ii).name
                     'TraverseDictionary (sects(s).items(i).items(ii).items)
-                    Debug.Print get_total_for_pos(sects(s).items(i).items(ii).items)
+                    Debug.Print get_total_for_pos(sects(s).Items(i).Items(ii).Items)
                 Next ii
                 Debug.Print "  |___"
             Else
                 'Debug.Print "not subsection"
-                Debug.Print "|" & sects(s).items(i).name
-                Debug.Print get_total_for_pos(sects(s).items(i).items)
+                Debug.Print "|" & sects(s).Items(i).name
+                Debug.Print get_total_for_pos(sects(s).Items(i).Items)
             End If
         Next i
         Debug.Print "|___"
@@ -278,7 +284,7 @@ Function GetNumeric(CellRef)
 End Function
 
 Public Sub add_to_global(name, row, col)
-    gvars(name) = gvars(name) + sWS.Cells(row, col).Value
+    gvars(name) = gvars(name) + sWS.Cells(row, col).value
 End Sub
 
 Public Function get_global(name)
@@ -302,17 +308,24 @@ Private Function get_total_for_pos(Item) As Double
     Item(X_COL) + _
     Item(Y_COL) + _
     Item(O_COL)
+    
+    ' FIX for транспортный сборник не расписывается по составляющим. Если total == 0, total = GM_COL
+    If get_total_for_pos = 0 Then
+        get_total_for_pos = Item(GM_COL)
+        ' FIX при total = 0, добавлять к гл.пер. MiM значение GM_COL
+        gvars("MiM") = gvars("MiM") + Item(GM_COL)
+    End If
 End Function
 
 Private Sub TraverseDictionary(d, Optional indention As String = " ", Optional ByVal i = 1, Optional ByVal depth = 0)
 
-    For Each key In d.Keys
-        Debug.Print (vbNewLine & indention & key & ":");
-        If VarType(d(key)) = 9 Then
+    For Each Key In d.Keys
+        Debug.Print (vbNewLine & indention & Key & ":");
+        If VarType(d(Key)) = 9 Then
             depth = depth + 1
-            TraverseDictionary d(key), indention & "    ", i, depth
+            TraverseDictionary d(Key), indention & "    ", i, depth
         Else
-            Debug.Print (" " & d(key))
+            Debug.Print (" " & d(Key))
         End If
         i = i + 1
     Next

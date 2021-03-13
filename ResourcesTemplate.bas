@@ -8,14 +8,14 @@ Public Sub createBook()
     setBook nWB
 End Sub
 
-Public Sub setBook(WB As Workbook)
-    Set nWB = WB
+Public Sub setBook(wb As Workbook)
+    Set nWB = wb
     
-    Set MiMWB = nWB.Sheets.Add(After:= _
+    Set MiMWB = nWB.Sheets.Add(after:= _
         nWB.Sheets(nWB.Sheets.Count))
     MiMWB.name = "МиМ"
     
-    Set MRWB = nWB.Sheets.Add(After:= _
+    Set MRWB = nWB.Sheets.Add(after:= _
         nWB.Sheets(nWB.Sheets.Count))
     MRWB.name = "МР"
 End Sub
@@ -34,13 +34,13 @@ Public Sub render_MiM(Optional MiM)
     With MiMWB
         ' нумерация
         For i = 3 To lastrow
-            .Range(.Cells(i, 1), .Cells(i, 1)).Value = i - 2
+            .Range(.Cells(i, 1), .Cells(i, 1)).value = i - 2
         Next i
-        .Range(.Cells(lastrow, 2), .Cells(lastrow, 2)).Value = "Прочее"
+        .Range(.Cells(lastrow, 2), .Cells(lastrow, 2)).value = "Прочее"
         
         .Names.Add name:="MiMOther", RefersTo:=.Range(.Cells(lastrow, 6), .Cells(lastrow, 6))
         .Names("MiMOther").Comment = "Машины и механизмы - Прочее"
-        .Range("MiMOther").Value = 0
+        .Range("MiMOther").value = 0
         
     
     
@@ -51,7 +51,7 @@ Public Sub render_MiM(Optional MiM)
         .Range("A1:A2").Merge
         .Range("A1:A2").FormulaR1C1 = "N П/П"
         
-        .Columns("B:B").ColumnWidth = 38
+        .Columns("B:B").ColumnWidth = 46
         .Range("B1:B2").Merge
         .Range("B1:B2").FormulaR1C1 = "Наименование"
         
@@ -89,15 +89,33 @@ Public Sub render_MiM(Optional MiM)
         .Range(.Cells(1, 1), .Cells(lastrow, 6)).Borders(xlInsideVertical).Weight = xlThin
         .Range(.Cells(1, 1), .Cells(lastrow, 6)).Borders(xlInsideHorizontal).LineStyle = xlContinuous
         .Range(.Cells(1, 1), .Cells(lastrow, 6)).Borders(xlInsideHorizontal).Weight = xlThin
+        .Range(.Cells(1, 1), .Cells(lastrow, 6)).VerticalAlignment = xlCenter
+        .Range(.Cells(1, 1), .Cells(lastrow, 1)).HorizontalAlignment = xlCenter
+        
+        .Range(.Cells(1, 2), .Cells(lastrow, 2)).WrapText = True
         .Range(.Cells(3, 6), .Cells(lastrow, 6)).FormulaR1C1 = "=RC[-1]*RC[-2]"
+        
+        ' Форматирование шапки
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlEdgeLeft).LineStyle = xlContinuous
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlEdgeLeft).Weight = xlMedium
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlEdgeTop).LineStyle = xlContinuous
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlEdgeTop).Weight = xlMedium
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlEdgeBottom).LineStyle = xlContinuous
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlEdgeBottom).Weight = xlMedium
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlEdgeRight).LineStyle = xlContinuous
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlInsideVertical).LineStyle = xlContinuous
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlInsideVertical).Weight = xlMedium
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlInsideHorizontal).LineStyle = xlContinuous
+        .Range(.Cells(1, 1), .Cells(2, 6)).Borders(xlInsideHorizontal).Weight = xlMedium
         
         ' Итого
         .Names.Add name:="MiMTotal", RefersTo:=.Range(.Cells(lastrow + 2, 6), .Cells(lastrow + 2, 6))
         .Names("MiMTotal").Comment = "Машины и механизмы - Итого"
         
-        .Range(.Cells(lastrow + 2, 5), .Cells(lastrow + 2, 5)).Value = "Итого"
-        .Range(.Cells(lastrow + 3, 5), .Cells(lastrow + 3, 5)).Value = "НДС"
-        .Range(.Cells(lastrow + 4, 5), .Cells(lastrow + 4, 5)).Value = "Всего с НДС"
+        .Range(.Cells(lastrow + 2, 5), .Cells(lastrow + 2, 5)).value = "Итого"
+        .Range(.Cells(lastrow + 3, 5), .Cells(lastrow + 3, 5)).value = "НДС"
+        .Range(.Cells(lastrow + 4, 5), .Cells(lastrow + 4, 5)).value = "Всего с НДС"
         
         .Range(.Cells(lastrow + 2, 6), .Cells(lastrow + 2, 6)).Formula = "=SUM(F3:F" & lastrow & ")"
         .Range(.Cells(lastrow + 3, 6), .Cells(lastrow + 3, 6)).FormulaR1C1 = "=R[-1]C*0.2"
@@ -107,7 +125,7 @@ Public Sub render_MiM(Optional MiM)
         .Range(.Cells(lastrow + 2, 5), .Cells(lastrow + 2, 6)).Font.Bold = True
         
         If Not IsMissing(MiM) Then
-            .Range("MiMOther").Value = MiM - .Range("MiMTotal").Value
+            .Range("MiMOther").value = MiM - .Range("MiMTotal").value
         End If
     End With
     
@@ -293,11 +311,13 @@ Private Function get_last_row(ws As Worksheet) As Integer
 End Function
 
 Public Sub fill_MR(nameRange As Range, unitRange As Range, amountRange As Range, priceRange As Range)
+    row = get_last_row(MRWB)
+    
     ' заполнение данных
-    CopyRange nameRange, MRWB.Range("C3")
-    CopyRange unitRange, MRWB.Range("D3")
-    CopyRange amountRange, MRWB.Range("E3")
-    CopyRange priceRange, MRWB.Range("F3")
+    CopyRange nameRange, MRWB.Range("C" & row)
+    CopyRange unitRange, MRWB.Range("D" & row)
+    CopyRange amountRange, MRWB.Range("E" & row)
+    CopyRange priceRange, MRWB.Range("F" & row)
 End Sub
 
 Public Sub render_MR(Optional MR)
@@ -307,13 +327,13 @@ Public Sub render_MR(Optional MR)
     ' нумерация
     With MRWB
         For i = 3 To lastrow
-            .Range(.Cells(i, 1), .Cells(i, 1)).Value = i - 2
+            .Range(.Cells(i, 1), .Cells(i, 1)).value = i - 2
         Next i
-        .Range(.Cells(lastrow, 3), .Cells(lastrow, 3)).Value = "Прочее"
+        .Range(.Cells(lastrow, 3), .Cells(lastrow, 3)).value = "Прочее"
         
         .Names.Add name:="MROther", RefersTo:=.Range(.Cells(lastrow, 7), .Cells(lastrow, 7))
         .Names("MROther").Comment = "Материальные ресурсы - Прочее"
-        .Range("MROther").Value = 0
+        .Range("MROther").value = 0
 
 
         ' Форматирование
@@ -332,7 +352,7 @@ Public Sub render_MR(Optional MR)
         .Range("A1:A2").Borders(xlEdgeRight).LineStyle = xlContinuous
         .Range("A1:A2").Borders(xlEdgeRight).Weight = xlMedium
         .Range("A1:A2").Merge
-        .Range("A1:A2").Value = "N п/п"
+        .Range("A1:A2").value = "N п/п"
         
         .Range("B1:B2").Borders(xlEdgeRight).LineStyle = xlContinuous
         .Range("B1:B2").Borders(xlEdgeRight).Weight = xlMedium
@@ -358,11 +378,11 @@ Public Sub render_MR(Optional MR)
         .Range("E1:G1").FormulaR1C1 = "Сметное (планируемое)"
         
         .Range("E2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("E2").Borders(xlEdgeRight).Weight = xlMedium
+        .Range("E2").Borders(xlEdgeRight).Weight = xlThin
         .Range("E2").FormulaR1C1 = "Кол-во"
         
         .Range("F2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("F2").Borders(xlEdgeRight).Weight = xlMedium
+        .Range("F2").Borders(xlEdgeRight).Weight = xlThin
         .Range("F2").FormulaR1C1 = "Цена за ед."
         
         .Columns("G:G").ColumnWidth = 16.86
@@ -400,11 +420,11 @@ Public Sub render_MR(Optional MR)
         .Range("J1:L1").FormulaR1C1 = "Коммерческая смета"
         
         .Range("J2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("J2").Borders(xlEdgeRight).Weight = xlMedium
+        .Range("J2").Borders(xlEdgeRight).Weight = xlThin
         .Range("J2").FormulaR1C1 = "Кол-во"
         
         .Range("K2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("K2").Borders(xlEdgeRight).Weight = xlMedium
+        .Range("K2").Borders(xlEdgeRight).Weight = xlThin
         .Range("K2").FormulaR1C1 = "Цена за ед."
         
         .Range("L2").Borders(xlEdgeRight).LineStyle = xlContinuous
@@ -425,11 +445,11 @@ Public Sub render_MR(Optional MR)
         .Range("M1:O1").FormulaR1C1 = "Заявки"
         
         .Range("M2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("M2").Borders(xlEdgeRight).Weight = xlMedium
-        .Range("M2").FormulaR1C1 = "N"
+        .Range("M2").Borders(xlEdgeRight).Weight = xlThin
+        .Range("M2").FormulaR1C1 = "№"
         
         .Range("N2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("N2").Borders(xlEdgeRight).Weight = xlMedium
+        .Range("N2").Borders(xlEdgeRight).Weight = xlThin
         .Range("N2").FormulaR1C1 = "Ед.изм"
         
         .Range("O2").Borders(xlEdgeRight).LineStyle = xlContinuous
@@ -451,20 +471,20 @@ Public Sub render_MR(Optional MR)
         .Range("P1:T1").Merge
         .Range("P1:T1").FormulaR1C1 = "Счета"
         
+        .Range("P2").Borders(xlEdgeRight).LineStyle = xlContinuous
+        .Range("P2").Borders(xlEdgeRight).Weight = xlThin
+        .Range("P2").FormulaR1C1 = "№"
+        
         .Range("Q2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("Q2").Borders(xlEdgeRight).Weight = xlMedium
-        .Range("Q2").FormulaR1C1 = "N"
+        .Range("Q2").Borders(xlEdgeRight).Weight = xlThin
+        .Range("Q2").FormulaR1C1 = "Ед. измер"
         
         .Range("R2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("R2").Borders(xlEdgeRight).Weight = xlMedium
-        .Range("R2").FormulaR1C1 = "Ед.изм"
-        
-        .Range("O2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("O2").Borders(xlEdgeRight).Weight = xlMedium
-        .Range("O2").FormulaR1C1 = "Кол-во"
+        .Range("R2").Borders(xlEdgeRight).Weight = xlThin
+        .Range("R2").FormulaR1C1 = "Кол-во"
         
         .Range("S2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("S2").Borders(xlEdgeRight).Weight = xlMedium
+        .Range("S2").Borders(xlEdgeRight).Weight = xlThin
         .Range("S2").FormulaR1C1 = "Цена за ед."
         
         .Range("T2").Borders(xlEdgeRight).LineStyle = xlContinuous
@@ -484,11 +504,11 @@ Public Sub render_MR(Optional MR)
         .Range("U1:W1").FormulaR1C1 = "Фактическое"
         
         .Range("U2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("U2").Borders(xlEdgeRight).Weight = xlMedium
-        .Range("U2").FormulaR1C1 = "N"
+        .Range("U2").Borders(xlEdgeRight).Weight = xlThin
+        .Range("U2").FormulaR1C1 = "Кол-во"
         
         .Range("V2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("V2").Borders(xlEdgeRight).Weight = xlMedium
+        .Range("V2").Borders(xlEdgeRight).Weight = xlThin
         .Range("V2").FormulaR1C1 = "Цена за ед"
         
         .Range("W2").Borders(xlEdgeRight).LineStyle = xlContinuous
@@ -508,11 +528,11 @@ Public Sub render_MR(Optional MR)
         .Range("X1:Z1").FormulaR1C1 = "Списанное"
         
         .Range("X2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("X2").Borders(xlEdgeRight).Weight = xlMedium
+        .Range("X2").Borders(xlEdgeRight).Weight = xlThin
         .Range("X2").FormulaR1C1 = "Кол-во"
         
         .Range("Y2").Borders(xlEdgeRight).LineStyle = xlContinuous
-        .Range("Y2").Borders(xlEdgeRight).Weight = xlMedium
+        .Range("Y2").Borders(xlEdgeRight).Weight = xlThin
         .Range("Y2").FormulaR1C1 = "Цена за ед"
         
         .Range("Z2").Borders(xlEdgeRight).LineStyle = xlContinuous
@@ -541,10 +561,33 @@ Public Sub render_MR(Optional MR)
         .Range(.Cells(3, 7), .Cells(lastrow, 7)).FormulaR1C1 = "=RC[-1]*RC[-2]"
         .Range(.Cells(3, 5), .Cells(lastrow + 5, 7)).NumberFormat = "#,##0.00"
         
+        .Range(.Cells(3, 1), .Cells(lastrow, 2)).HorizontalAlignment = xlCenter
+        .Range(.Cells(3, 1), .Cells(lastrow, 2)).VerticalAlignment = xlCenter
+        .Range(.Cells(3, 3), .Cells(lastrow, 3)).WrapText = True
+        .Range(.Cells(3, 4), .Cells(lastrow, 5)).HorizontalAlignment = xlCenter
+        .Range(.Cells(3, 4), .Cells(lastrow, 26)).VerticalAlignment = xlCenter
+        .Range(.Cells(3, 8), .Cells(lastrow, 8)).WrapText = True
+        .Range(.Cells(3, 9), .Cells(lastrow, 10)).HorizontalAlignment = xlCenter
+        .Range(.Cells(3, 10), .Cells(lastrow, 26)).NumberFormat = "#,##0.00"
+        
+        ' Вертикальные разделители
+        .Range(.Cells(1, 1), .Cells(lastrow, 1)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 2), .Cells(lastrow, 2)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 3), .Cells(lastrow, 3)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 4), .Cells(lastrow, 4)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 7), .Cells(lastrow, 7)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 8), .Cells(lastrow, 8)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 9), .Cells(lastrow, 9)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 12), .Cells(lastrow, 12)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 15), .Cells(lastrow, 15)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 20), .Cells(lastrow, 20)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 23), .Cells(lastrow, 23)).Borders(xlEdgeRight).Weight = xlMedium
+        .Range(.Cells(1, 26), .Cells(lastrow, 26)).Borders(xlEdgeRight).Weight = xlMedium
+        
         ' Итого
-        .Range(.Cells(lastrow + 2, 6), .Cells(lastrow + 2, 6)).Value = "Итого"
-        .Range(.Cells(lastrow + 3, 6), .Cells(lastrow + 3, 6)).Value = "НДС"
-        .Range(.Cells(lastrow + 4, 6), .Cells(lastrow + 4, 6)).Value = "Всего с НДС"
+        .Range(.Cells(lastrow + 2, 6), .Cells(lastrow + 2, 6)).value = "Итого"
+        .Range(.Cells(lastrow + 3, 6), .Cells(lastrow + 3, 6)).value = "НДС"
+        .Range(.Cells(lastrow + 4, 6), .Cells(lastrow + 4, 6)).value = "Всего с НДС"
         
         .Range(.Cells(lastrow + 2, 7), .Cells(lastrow + 2, 7)).FormulaR1C1 = _
         "=SUM(INDIRECT(ADDRESS(MATCH(""Итого"",C,0)+1,COLUMN())):INDIRECT(ADDRESS(ROW()-1,COLUMN())))"
@@ -560,9 +603,9 @@ Public Sub render_MR(Optional MR)
         
         
         
-        .Range(.Cells(lastrow + 2, 11), .Cells(lastrow + 2, 11)).Value = "Итого"
-        .Range(.Cells(lastrow + 3, 11), .Cells(lastrow + 3, 11)).Value = "НДС"
-        .Range(.Cells(lastrow + 4, 11), .Cells(lastrow + 4, 11)).Value = "Всего с НДС"
+        .Range(.Cells(lastrow + 2, 11), .Cells(lastrow + 2, 11)).value = "Итого"
+        .Range(.Cells(lastrow + 3, 11), .Cells(lastrow + 3, 11)).value = "НДС"
+        .Range(.Cells(lastrow + 4, 11), .Cells(lastrow + 4, 11)).value = "Всего с НДС"
         
         .Range(.Cells(lastrow + 2, 12), .Cells(lastrow + 2, 12)).FormulaR1C1 = _
         "=SUM(INDIRECT(ADDRESS(MATCH(""Итого"",C,0)+1,COLUMN())):INDIRECT(ADDRESS(ROW()-1,COLUMN())))"
@@ -574,9 +617,9 @@ Public Sub render_MR(Optional MR)
         
         
         
-        .Range(.Cells(lastrow + 2, 19), .Cells(lastrow + 2, 19)).Value = "Итого"
-        .Range(.Cells(lastrow + 3, 19), .Cells(lastrow + 3, 19)).Value = "НДС"
-        .Range(.Cells(lastrow + 4, 19), .Cells(lastrow + 4, 19)).Value = "Всего с НДС"
+        .Range(.Cells(lastrow + 2, 19), .Cells(lastrow + 2, 19)).value = "Итого"
+        .Range(.Cells(lastrow + 3, 19), .Cells(lastrow + 3, 19)).value = "НДС"
+        .Range(.Cells(lastrow + 4, 19), .Cells(lastrow + 4, 19)).value = "Всего с НДС"
         
         .Range(.Cells(lastrow + 2, 20), .Cells(lastrow + 2, 20)).FormulaR1C1 = _
         "=SUM(INDIRECT(ADDRESS(MATCH(""Стоимость"",C,0)+1,COLUMN())):INDIRECT(ADDRESS(ROW()-1,COLUMN())))"
@@ -587,7 +630,7 @@ Public Sub render_MR(Optional MR)
         .Range(.Cells(lastrow + 2, 19), .Cells(lastrow + 2, 20)).Font.Bold = True
         
         If Not IsMissing(MR) Then
-            .Range("MROther").Value = MR - .Range("MRTotal").Value
+            .Range("MROther").value = MR - .Range("MRTotal").value
         End If
         
     End With

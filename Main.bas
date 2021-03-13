@@ -17,13 +17,17 @@
     
     Const X_COL As Integer = 24
     Const Y_COL As Integer = 25
+    
+    Const EH_COL As Integer = 138
+    Const EM_COL As Integer = 143
+    Const GM_COL As Integer = 195
 
 
 Public Sub transformSmeta()
-    Dim WB As Workbook: Set WB = ActiveWorkbook
+    Dim wb As Workbook: Set wb = ActiveWorkbook
 
     Dim shtName As String: shtName = "Source"
-    If Not WorksheetExists(shtName, WB) Then
+    If Not WorksheetExists(shtName, wb) Then
         answer = MsgBox("Не найден лист Source, использовать текущий лист?", vbYesNo)
         If answer = vbNo Then
             Exit Sub
@@ -33,7 +37,7 @@ Public Sub transformSmeta()
     Dim StartTime As Double
     Dim SecondsElapsed As Double
     StartTime = Timer
-    Dim ws As Worksheet: Set ws = WB.Worksheets(shtName)
+    Dim ws As Worksheet: Set ws = wb.Worksheets(shtName)
     Dim blocks As Collection: Set blocks = New Collection
     Dim constr As EstimationConstructor
     Set constr = New EstimationConstructor
@@ -62,6 +66,7 @@ Public Sub transformSmeta()
             ' A=52 С=3 - локальная смета
             ElseIf is_abcd(ws, i, C:=3) Then
                 constr.add_to_global "LocalSmeta", i, G_COL
+                'constr.add_local_smeta i, G_COL
             ' A=52 C=4 - начало раздела
             ElseIf is_abcd(ws, i, C:=4) Then
                 constr.add_section_col i, G_COL
@@ -79,6 +84,13 @@ Public Sub transformSmeta()
                 Err.Raise Number:=vbObjectError + 513, _
                   Description:="Incorrect 52-51 nesting on lines: " & startLine & " and " & endLine
             End If
+            
+            ' A=51 C=1 - конец сметы
+            If is_abcd(ws, i, C:=1) Then
+                ' Сохраним значения EM, EH для корретировки зимнего удорожания
+                constr.add_to_global "EM", i, EM_COL
+                constr.add_to_global "EH", i, EH_COL
+            End If
     
             blocks.Remove (blocks.Count)
             
@@ -86,7 +98,7 @@ Public Sub transformSmeta()
         ElseIf is_abcd(ws, i, A:=Array(17, 18), B:=1) Then
             ' Только строки с черным текстом (игнорируем синие)
             If is_black(ws, i) Then
-                itemNum = ws.Cells(i, E_COL).Value
+                itemNum = ws.Cells(i, E_COL).value
                 'игнорируем позиции без номера
                 If itemNum <> "" Then
                     ' Основные позиции (без запятой в номере)
@@ -105,6 +117,8 @@ Public Sub transformSmeta()
                         constr.add_item_vars i, S_COL, itemNum
                         constr.add_item_vars i, X_COL, itemNum
                         constr.add_item_vars i, Y_COL, itemNum
+                        
+                        constr.add_item_vars i, GM_COL, itemNum
                         
                         constr.add_to_global "MiM", i, Q_COL
                         constr.add_to_global "ZPmas", i, R_COL
@@ -131,14 +145,34 @@ Public Sub transformSmeta()
     Next i
     
     constr.render
-    transformResources WB, constr.tpl.nWB, constr.get_global("MR"), constr.get_global("MiM")
+    transformResources wb, constr.tpl.nWB, constr.get_global("MR"), constr.get_global("MiM")
+    transformBudget constr
+    constr.tpl.render_final_addons
     
     
     SecondsElapsed = Round(Timer - StartTime, 2)
     Debug.Print "Execution time: " & SecondsElapsed
 End Sub
 
-Public Sub transformResources(WB As Workbook, newWB As Workbook, MR As Double, MiM As Double)
+Private Sub transformBudget(constr As EstimationConstructor)
+    Dim wb As Workbook
+    Set wb = constr.tpl.nWB
+    Dim budget As BudgetController
+    Set budget = New BudgetController
+    budget.addBudgetSheet wb, constr.get_global("Name")
+    ActiveSheet.name = "Бюджет"
+    
+    For i = 1 To 9
+        If ActiveSheet.Cells(i, 1).Text <> "" Then
+            wb.Names.Add name:=Replace(ActiveSheet.Cells(i, 1).Text, " ", "_"), RefersTo:=ActiveSheet.Range(ActiveSheet.Cells(i, 2), ActiveSheet.Cells(i, 2))
+        End If
+    Next i
+    
+    'ActiveSheet.Visible = False
+End Sub
+
+
+Private Sub transformResources(wb As Workbook, newWB As Workbook, MR As Double, MiM As Double)
     'If IsEmpty(WB) Then
     '    Set WB = ActiveWorkbook
     'End If
@@ -150,32 +184,43 @@ Public Sub transformResources(WB As Workbook, newWB As Workbook, MR As Double, M
     tpl.setBook newWB
         
         
-    If Not WorksheetExists(shtName, WB) Then
+    If Not WorksheetExists(shtName, wb) Then
         MsgBox "Не найден лист с расчетом стоимости ресурсов, таблицы МиМ и МР будут пусты"
     Else
-        Dim ws As Worksheet: Set ws = WB.Worksheets(shtName)
+        Dim ws As Worksheet: Set ws = wb.Worksheets(shtName)
         firstRow = 1
         lastrow = ws.Cells(ws.Cells.Rows.Count, "A").End(xlUp).row
         
         Dim cel As Range
         MiMstart = -1
         MiMend = -1
+        
         MRstart = -1
         MRend = -1
+        
+        OBRstart = -1
+        OBRend = -1
         
         For i = firstRow To lastrow
             Set cel = ws.Range(ws.Cells(i, 1), ws.Cells(i, 3))
             If cel.MergeCells = True Then
     
-                cel.Interior.Color = vbRed
-                If InStr(cel(1).Value, "Машины и механизмы ") > 0 Then
+                'cel.Interior.Color = vbRed 'Debug
+                
+                If InStr(cel(1).value, "Машины и механизмы ") > 0 Then
                     MiMstart = i
-                ElseIf InStr(cel(1).Value, "Итого машины и механизмы") > 0 Then
+                ElseIf InStr(cel(1).value, "Итого машины и механизмы") > 0 Then
                     MiMend = i
-                ElseIf InStr(cel(1).Value, "Материальные ресурсы") > 0 Then
+                ElseIf InStr(cel(1).value, "Материальные ресурсы") > 0 Then
                     MRstart = i
-                ElseIf InStr(cel(1).Value, "Итого материальные ресурсы") > 0 Then
+                ElseIf InStr(cel(1).value, "Итого материальные ресурсы") > 0 Then
                     MRend = i
+                ' Оборудование
+                ElseIf InStr(cel(1).value, "Оборудование") > 0 Then
+                    OBRstart = i
+                ElseIf InStr(cel(1).value, "Итого оборудование") > 0 Then
+                    OBRend = i
+                
                 End If
             End If
         Next i
@@ -197,6 +242,14 @@ Public Sub transformResources(WB As Workbook, newWB As Workbook, MR As Double, M
                 unitRange:=ws.Range(ws.Cells(MiMstart + 1, 3), ws.Cells(MiMend - 1, 3)), _
                 amountRange:=ws.Range(ws.Cells(MiMstart + 1, 4), ws.Cells(MiMend - 1, 4)), _
                 priceRange:=ws.Range(ws.Cells(MiMstart + 1, 7), ws.Cells(MiMend - 1, 7))
+                
+            If OBRstart <> -1 And OBRend <> -1 Then
+                tpl.fill_MR _
+                    nameRange:=ws.Range(ws.Cells(OBRstart + 1, 2), ws.Cells(OBRend - 1, 2)), _
+                    unitRange:=ws.Range(ws.Cells(OBRstart + 1, 3), ws.Cells(OBRend - 1, 3)), _
+                    amountRange:=ws.Range(ws.Cells(OBRstart + 1, 4), ws.Cells(OBRend - 1, 4)), _
+                    priceRange:=ws.Range(ws.Cells(OBRstart + 1, 7), ws.Cells(OBRend - 1, 7))
+            End If
         End If
             
     End If ' WorkSheet Exists
@@ -205,12 +258,14 @@ Public Sub transformResources(WB As Workbook, newWB As Workbook, MR As Double, M
     tpl.render_MiM MiM
 End Sub
 
-Function WorksheetExists(shtName As String, Optional WB As Workbook) As Boolean
+
+
+Function WorksheetExists(shtName As String, Optional wb As Workbook) As Boolean
     Dim sht As Worksheet
 
-    If WB Is Nothing Then Set WB = ActiveWorkbook
+    If wb Is Nothing Then Set wb = ActiveWorkbook
     On Error Resume Next
-    Set sht = WB.Sheets(shtName)
+    Set sht = wb.Sheets(shtName)
     On Error GoTo 0
     WorksheetExists = Not sht Is Nothing
 End Function
@@ -245,13 +300,13 @@ Function is_abcd(ws, row, Optional ByVal A As Variant = Null, Optional ByVal B A
 End Function
 
 Private Function cell_equals(ws, row, col, val) As Boolean
-    cell_equals = ws.Cells(row, col).Value = val
+    cell_equals = ws.Cells(row, col).value = val
 End Function
 
 Private Function cell_in_array(ws, row, col, arr) As Boolean
     Dim i
     For i = LBound(arr) To UBound(arr)
-        If arr(i) = ws.Cells(row, col).Value Then
+        If arr(i) = ws.Cells(row, col).value Then
             cell_in_array = True
             Exit Function
         End If
@@ -264,5 +319,5 @@ Private Function is_black(ws, row) As Boolean
 End Function
 
 Private Function has_comma(ws, row, Optional ByVal col = 5) As Boolean
-    has_comma = InStr(ws.Cells(row, col).Value, ",") > 0
+    has_comma = InStr(ws.Cells(row, col).value, ",") > 0
 End Function
