@@ -13,7 +13,7 @@ End Sub
 
 Private Sub findAndSetValueOnSheet(name As String, value)
     For i = 1 To 9
-        If Sheet.Cells(i, 1).Text = name Then
+        If Sheet.Cells(i, 1).text = name Then
             Sheet.Cells(i, 2).value = value
             Exit Sub
         End If

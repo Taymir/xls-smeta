@@ -36,92 +36,78 @@ Const GM_COL As Integer = 195
 
 Private sWS As Worksheet
 Private gvars
-Private sects As Collection
+Private sects As Section
 Private lastItem
 Public tpl As EstimationTemplate
 
 Private Sub Class_Initialize()
     Set gvars = CreateObject("Scripting.Dictionary")
-    Set sects = New Collection
+    Set sects = New Section
 End Sub
 
 Public Sub init(sourceWS As Worksheet)
     Set sWS = sourceWS
 End Sub
 
+Public Sub add_localsmeta_col(row, col)
+    add_section sWS.Cells(row, col).value
+End Sub
 
-Private Function is_subsection(Optional ByVal current As Integer = -1, Optional ByVal curitem As Integer = -1) As Boolean
-    is_subsection = False
-    
-    If current = -1 Then
-        current = sects.Count
-    End If
-    If curitem = -1 Then
-        curitem = sects(current).Items.Count
-    End If
-    If curitem > 0 Then
-        If TypeOf sects(current).Items(curitem) Is Section Then
-            is_subsection = True
-        End If
-    End If
+
+Private Function new_section(name As String) As Section
+    Set new_section = New Section
+    new_section.name = name
+    Set new_section.Items = New Collection
 End Function
+
+
 Public Sub add_section_col(row, col)
-    add_section (sWS.Cells(row, col).value)
+    add_section sWS.Cells(row, col).value, 2
 End Sub
 
-Public Sub add_section(name As String)
-    Dim sect As Section
-    Set sect = New Section
-    
-    sect.name = name
-    Set sect.Items = New Collection
-    
-    sects.Add sect
-End Sub
 
 Public Sub add_subsection_col(row, col)
-    add_subsection (sWS.Cells(row, col).value)
+    add_section sWS.Cells(row, col).value, 3
 End Sub
 
-Public Sub add_subsection(name)
-    Dim sect As Section
-    Set sect = New Section
+
+Private Sub add_section(name As String, Optional level As Integer = 1)
+    Set sect = new_section(name)
     
-    sect.name = name
-    Set sect.Items = New Collection
-    
-    current = sects.Count
-    sects(current).Items.Add sect
+    Dim where_to_add As Section
+    Set where_to_add = sects
+    For l = 1 To level - 1
+        cnt = where_to_add.Items.Count
+        Set where_to_add = where_to_add.Items(cnt)
+    Next l
+    where_to_add.Items.Add sect
 End Sub
+
 
 Private Function get_last_section() As Section
-    last_section = sects.Count
+    Dim last_section As Section
+    Set last_section = sects
+    last_item = sects.Items.Count
+    While has_subsection(last_section)
+        Set last_section = last_section.Items(last_item)
+        last_item = last_section.Items.Count
+    Wend
+    Set get_last_section = last_section
+End Function
+
+Private Function has_subsection(sect As Section) As Boolean
+    cnt = sect.Items.Count
     
-    'HARDFIX TMP: Если item добавляется в отсутствии sect-ов, добавим элемент LocalSmeta в качестве 0-го раздела
-    If last_section = 0 Then
-        Dim sect As Section
-        Set sect = New Section
-        
-        sect.name = "LocalSmeta"
-        Set sect.Items = New Collection
-        
-        sects.Add sect
-        last_section = 1
+    If cnt > 0 Then
+        If TypeOf sect.Items(cnt) Is Section Then
+            has_subsection = True
+            Exit Function
+        End If
     End If
-    
-    last_item = sects(last_section).Items.Count
-    
-    If is_subsection(last_section, last_item) Then
-        Set get_last_section = sects(last_section).Items(last_item)
-    Else
-        Set get_last_section = sects(last_section)
-    End If
+    has_subsection = False
 End Function
 
 Public Sub add_item(itemNum)
-    'last_section = sects.Count
-    'last_item = sects(last_section).items.Count
-    
     Dim itm As Item
     Set itm = New Item
     itm.name = itemNum
@@ -129,26 +115,24 @@ Public Sub add_item(itemNum)
     
     Set sect = get_last_section
     sect.Items.Add itm, CStr(itemNum)
-    
-    'If is_subsection(last_section, last_item) Then
-    '    sects(last_section).items(last_item).items.Add itm, CStr(itemNum)
-    'Else
-    '    sects(last_section).items.Add itm, CStr(itemNum)
-    'End If
 End Sub
 
 
 Public Sub add_item_vars(row, col, ByVal itemNum)
+    Dim sect As Section
+    Dim itm As Item
     Set sect = get_last_section
     itemNum = CStr(itemNum)
 
     If Not HasKey(sect.Items, itemNum) Then
         add_item (itemNum)
     End If
-    If Not sect.Items(itemNum).Items.Exists(col) Then
-        sect.Items(itemNum).Items.Add col, sWS.Cells(row, col).value
+    
+    Set itm = sect.Items(itemNum)
+    If Not itm.Items.Exists(col) Then
+        itm.Items.Add col, sWS.Cells(row, col).value
     Else
-        sect.Items(itemNum).Items(col) = sect.Items(itemNum).Items(col) + sWS.Cells(row, col).value
+        itm.Items(col) = itm.Items(col) + sWS.Cells(row, col).value
     End If
 End Sub
 
@@ -165,26 +149,34 @@ IsMissingError:
         On Error GoTo 0
 End Function
 
-Public Sub test2()
-    print_sects
-End Sub
 
-Public Sub Test()
-    add_section ("Главная")
+Public Sub test()
+    add_section "LocalSmeta", 1
+    add_section "Главная", 2
     add_item (0)
-    add_section ("вторая")
+    add_section "вторая", 2
     add_item (1)
     add_item (2)
     add_item (3)
-    add_section ("Третья")
-    add_subsection ("первый подраздел третьей секции")
+    add_section "Третья", 2
+    add_section "первый подраздел третьей секции", 3
     add_item (4)
-    add_subsection ("второй подраздел третьей секции")
+    add_section "второй подраздел третьей секции", 3
     add_item (5)
     add_item (6)
     
     
-    print_sects
+    ' add_section LocalSmeta
+    ' add_section 1
+    ' end_section 1 ' go up
+    ' add_section 2
+    ' end_section 2 ' go up
+    ' end_section LocalSmeta
+    
+    
+    ' or use localSmeta as section?
+    
+    print_sects sects
 End Sub
 
 Public Sub render()
@@ -192,21 +184,9 @@ Public Sub render()
     tpl.createBook
     tpl.render_header gvars("Name"), gvars("SmetaName")
     
-    For s = 1 To sects.Count
-        tpl.render_section sects(s).name
-        
-        For i = 1 To sects(s).Items.Count
-            If is_subsection(s, i) Then
-                tpl.render_subsection sects(s).Items(i).name
-                
-                For ii = 1 To sects(s).Items(i).Items.Count
-                    render_item tpl, sects(s).Items(i).Items(ii)
-                Next ii
-            Else ' is not subsection == is item
-                render_item tpl, sects(s).Items(i)
-            End If
-        Next i
-    Next s
+    ' TODO Особые условия для 1го уровня вложенности (LocalSmeta):
+    ' Если один элемент на первом уровне, то не применяем к нему
+    render_section sects
         
     tpl.render_footer _
         MR:=gvars("MR"), _
@@ -216,7 +196,30 @@ Public Sub render()
         SP:=gvars("SP"), _
         EH:=gvars("EH"), _
         EM:=gvars("EM")
-    
+End Sub
+
+Private Sub render_section(sect, Optional level As Integer = 1)
+    cnt = sect.Items.Count
+    For i = 1 To cnt
+        Set el = sect.Items(i)
+        If TypeOf el Is Section Then
+            
+            If level = 1 Then
+                If cnt > 1 Then
+                    'FIX: smeta_mode
+                    tpl.render_section el.name
+                End If
+            ElseIf level = 2 Then
+                tpl.render_section el.name
+            ElseIf level = 3 Then
+                tpl.render_subsection el.name
+            End If
+            
+            render_section el, level:=level + 1
+        Else
+            render_item tpl, el
+        End If
+    Next i
 End Sub
 
 Private Sub render_item(tpl, Item)
@@ -235,26 +238,15 @@ Private Sub render_item(tpl, Item)
     tpl.render_item num, code, name, unit, amount, total, total_fot
 End Sub
 
-Private Sub print_sects()
-    For s = 1 To sects.Count
-        Debug.Print "+" & sects(s).name
-        For i = 1 To sects(s).Items.Count
-            If is_subsection(s, i) Then
-                'Debug.Print "subsection"
-                Debug.Print "  +" & sects(s).Items(i).name
-                For ii = 1 To sects(s).Items(i).Items.Count
-                    Debug.Print "  |" & sects(s).Items(i).Items(ii).name
-                    'TraverseDictionary (sects(s).items(i).items(ii).items)
-                    Debug.Print get_total_for_pos(sects(s).Items(i).Items(ii).Items)
-                Next ii
-                Debug.Print "  |___"
-            Else
-                'Debug.Print "not subsection"
-                Debug.Print "|" & sects(s).Items(i).name
-                Debug.Print get_total_for_pos(sects(s).Items(i).Items)
-            End If
-        Next i
-        Debug.Print "|___"
+
+Private Sub print_sects(sect, Optional offset As String = "")
+    For s = 1 To sect.Items.Count
+        If TypeOf sect.Items(s) Is Section Then
+            Debug.Print offset & "+" & sect.Items(s).name
+            print_sects sect.Items(s), offset & "  "
+        Else
+            Debug.Print offset & "|" & sect.Items(s).name
+        End If
     Next s
 End Sub
 
@@ -292,15 +284,6 @@ Public Function get_global(name)
 End Function
 
 
-Public Sub set_name(str As name)
-    name = str
-End Sub
-
-Public Sub set_object(str As name)
-    object = str
-End Sub
-
-
 Private Function get_total_for_pos(Item) As Double
     get_total_for_pos = Item(P_COL) + _
     Item(Q_COL) + _
@@ -316,18 +299,4 @@ Private Function get_total_for_pos(Item) As Double
         gvars("MiM") = gvars("MiM") + Item(GM_COL)
     End If
 End Function
-
-Private Sub TraverseDictionary(d, Optional indention As String = " ", Optional ByVal i = 1, Optional ByVal depth = 0)
-
-    For Each Key In d.Keys
-        Debug.Print (vbNewLine & indention & Key & ":");
-        If VarType(d(Key)) = 9 Then
-            depth = depth + 1
-            TraverseDictionary d(Key), indention & "    ", i, depth
-        Else
-            Debug.Print (" " & d(Key))
-        End If
-        i = i + 1
-    Next
-End Sub
 

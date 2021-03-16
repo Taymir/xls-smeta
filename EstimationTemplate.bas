@@ -36,8 +36,10 @@ Public Sub render_header(object, smetaName)
     nWS.Columns(13).ColumnWidth = 18.3
     
     ' Объединение, расположение текста
+    Dim Budget As BudgetController
+    Set Budget = New BudgetController
     Dim ShowAgreement As Boolean
-    ShowAgreement = True ' tmp
+    ShowAgreement = Budget.hasOffsets(CStr(object))
     HeaderRange = IIf(ShowAgreement, "A1:G3", "A1:H3")
     nWS.Range(HeaderRange).Merge
     nWS.Range(HeaderRange).HorizontalAlignment = xlCenter
@@ -101,7 +103,7 @@ Public Sub render_header(object, smetaName)
     nWS.Range("K1:M1").Merge
     nWS.Range("K1:M1").value = "Статья бюджета"
     nWS.Range("K2:K2").value = "№"
-    nWS.Range("K3:K3").value = "1.1.4.1." ' tmp
+    nWS.Range("K3:K3").value = Budget.getBudgetItemBySmetaName(CStr(object), CStr(smetaName))
     nWS.Range("L2:M2").Merge
     nWS.Range("L2:M2").value = "Наименование"
     nWS.Range("L3:M3").Merge
@@ -208,7 +210,7 @@ Public Sub render_final_addons()
         ' TODO Всегда ли есть бюджет? Определение первой и последней строки бюджета?
         
         If RangeExists("Генподряд") Then
-            Debug.Print ("range exists!!!")
+            'Debug.Print ("range exists!!!")
             .Rows(Genpordryad_row).Insert
             .Range(.Cells(Genpordryad_row, 3), .Cells(Genpordryad_row, 3)).value = "Генподряд"
             .Range(.Cells(Genpordryad_row, 10), .Cells(Genpordryad_row, 10)).FormulaR1C1 = "=GrandTotal*Генподряд"
@@ -223,7 +225,7 @@ Private Function get_last_row() As Integer
 
 End Function
 
-Public Sub render_section(name)
+Public Sub render_section(name, Optional text As String = "Раздел: ")
     With nWS
         row = get_last_row + 1
         
@@ -241,12 +243,12 @@ Public Sub render_section(name)
         .Range(.Cells(row, 1), .Cells(row, 13)).Borders.LineStyle = True
         .Range(.Cells(row, 1), .Cells(row, 13)).HorizontalAlignment = xlCenter
         .Range(.Cells(row, 1), .Cells(row, 13)).Borders.Weight = xlMedium
-        .Range(.Cells(row, 1), .Cells(row, 13)).value = "Раздел: " & name
+        .Range(.Cells(row, 1), .Cells(row, 13)).value = text & name
     End With
 End Sub
 
 Public Sub render_subsection(name)
-    render_section (name) ' тот же шаблон, что и для основного раздела
+    render_section name, text:="Подраздел: "   ' тот же шаблон, что и для основного раздела
 End Sub
 
 Public Sub render_item(num, code, name, unit, amount, total, total_fot)
@@ -650,8 +652,9 @@ Private Sub render_footer3(NR, SP, EH, EM)
 End Sub
     
 Private Function RangeExists(name As String) As Boolean
+    Dim test As Variant
     On Error Resume Next
-    Set Test = ActiveWorkbook.Names.Item(name)
+    Set test = ActiveWorkbook.Names.Item(name)
     RangeExists = Err.Number = 0
 End Function
     

@@ -66,7 +66,7 @@ Public Sub transformSmeta()
             ' A=52 С=3 - локальная смета
             ElseIf is_abcd(ws, i, C:=3) Then
                 constr.add_to_global "LocalSmeta", i, G_COL
-                'constr.add_local_smeta i, G_COL
+                constr.add_localsmeta_col i, G_COL
             ' A=52 C=4 - начало раздела
             ElseIf is_abcd(ws, i, C:=4) Then
                 constr.add_section_col i, G_COL
@@ -157,18 +157,18 @@ End Sub
 Private Sub transformBudget(constr As EstimationConstructor)
     Dim wb As Workbook
     Set wb = constr.tpl.nWB
-    Dim budget As BudgetController
-    Set budget = New BudgetController
-    budget.addBudgetSheet wb, constr.get_global("Name")
+    Dim Budget As BudgetController
+    Set Budget = New BudgetController
+    Budget.addBudgetSheet wb, constr.get_global("Name")
     ActiveSheet.name = "Бюджет"
     
     For i = 1 To 9
-        If ActiveSheet.Cells(i, 1).Text <> "" Then
-            wb.Names.Add name:=Replace(ActiveSheet.Cells(i, 1).Text, " ", "_"), RefersTo:=ActiveSheet.Range(ActiveSheet.Cells(i, 2), ActiveSheet.Cells(i, 2))
+        If ActiveSheet.Cells(i, 1).text <> "" Then
+            wb.Names.Add name:=Replace(ActiveSheet.Cells(i, 1).text, " ", "_"), RefersTo:=ActiveSheet.Range(ActiveSheet.Cells(i, 2), ActiveSheet.Cells(i, 2))
         End If
     Next i
     
-    'ActiveSheet.Visible = False
+    ActiveSheet.Visible = False
 End Sub
 
 

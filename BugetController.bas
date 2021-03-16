@@ -12,7 +12,6 @@ End Function
 
 Private Function getBudgetRow(name As String, Optional SearchRange As String = "B:B") As Integer
     Dim ws As Worksheet
-    Dim FoundCell As Range
     Set ws = ThisWorkbook.Sheets("Список бюджетов")
     Set FoundCell = ws.Range(SearchRange).Find(What:=name)
     If Not FoundCell Is Nothing Then
@@ -21,7 +20,7 @@ Private Function getBudgetRow(name As String, Optional SearchRange As String = "
         getBudgetRow = -1
     End If
 End Function
-Public Function AliasByObjectName(name As String) As String
+Public Function AliasByObjectName(name) As String
     row = getBudgetRow(name)
     If row = -1 Then
         AliasByObjectName = ""
@@ -30,6 +29,41 @@ Public Function AliasByObjectName(name As String) As String
     End If
 End Function
 
+Public Function hasOffsets(name As String) As Boolean
+    Dim sh As Worksheet
+    If IsKnownBudget(name) Then
+        Set sh = getBudgetSheet(name)
+    Else
+        Set sh = ThisWorkbook.Sheets("default")
+    End If
+    If sh.Range("C1:Q1").Find("Offset") Is Nothing Then
+        hasOffsets = False
+    Else
+        hasOffsets = True
+    End If
+End Function
+
+Public Function getBudgetItemBySmetaName(name As String, smetaName As String) As String
+    Dim sh As Worksheet
+    If IsKnownBudget(name) Then
+        Set sh = getBudgetSheet(name)
+    Else
+        Set sh = ThisWorkbook.Sheets("default")
+    End If
+    ' Выделить номер статьи из смета нейм
+    smetaName = Split(smetaName, " ", 2)(0)
+    ' Искать статью
+    Dim res As Range
+    Set res = sh.Range("A12:A2000").Find(smetaName)
+    ' Если не найдена, вернуть первую
+    If Not res Is Nothing Then
+        Set res = res.offset(0, 1)
+    Else
+        Set res = sh.Range("B12:B12")
+    End If
+    
+    getBudgetItemBySmetaName = res.value
+End Function
 
 Public Function ObjectNameByAlias(alias As String) As String
     row = getBudgetRow(name, "A:A")
